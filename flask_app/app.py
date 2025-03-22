@@ -26,12 +26,12 @@ def login():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Recupera l'utente dal database
+        # Recupera l'utenza dal database
         cur.execute('SELECT * FROM utenti WHERE username = %s;', (username,))
         user = cur.fetchone()
 
-        # Controllo delle credenziali
-        if user and check_password_hash(user[2], password):  # user[2] è la password_hash
+        # Controllo delle credenziali:
+        if user and user[2] == password:  
             session['user_id'] = user[0]  # Salva l'ID dell'utente nella sessione
             return redirect(url_for('index'))  # Redirige alla homepage
         cur.close()
