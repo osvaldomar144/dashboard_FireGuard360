@@ -3,7 +3,7 @@ import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key'  # Cambia con una chiave segreta unica per la sicurezza
+app.secret_key = 'your_secret_key'  # Cambia con una chiave segreta sicura
 
 # Funzione per connettersi a MySQL
 def get_db_connection():
@@ -26,44 +26,45 @@ def login():
         conn = get_db_connection()
         cur = conn.cursor()
 
-        # Recupera l'utente dal database
-        cur.execute('SELECT * FROM utenti WHERE username = %s;', (username,))
+        # Recupera l'utenza dal database
+        cur.execute('SELECT id, username, password_hash sword FROM utenti WHERE username = %s;', (username,))
         user = cur.fetchone()
 
-        # Controllo delle credenziali
-        if user and check_password_hash(user[2], password):  # user[2] è la password_hash
-            session['user_id'] = user[0]  # Salva l'ID dell'utente nella sessione
-            return redirect(url_for('index'))  # Redirige alla homepage
         cur.close()
         conn.close()
-        return 'Credenziali errate, riprova.', 403  # Messaggio di errore per credenziali sbagliate
+
+        # Controllo delle credenziali in modo sicuro (con hashing)
+        if user and user[2] == password: 
+            session['user_id'] = user[0]           # Salva l'ID utente nella sessione
+            session['username'] = user[1]          # Salva il nome utente nella sessione
+            return redirect(url_for('index'))      # Reindirizza alla homepage
+        else:
+            return 'Credenziali errate, riprova.', 403  # Messaggio di errore per credenziali sbagliate
 
     return render_template('login.html')
 
 @app.route('/')
 def index():
     if 'user_id' not in session:  # Verifica se l'utente è loggato
-        return redirect(url_for('login'))  # Redirige alla pagina di login se non è loggato
+        return redirect(url_for('login'))  # Reindirizza al login se non loggato
 
-    # Connessione al database
+    # Connessione al database per recuperare i dati Arduino
     conn = get_db_connection()
     cur = conn.cursor()
+    cur.execute('SELECT * FROM dati_arduino ORDER BY id DESC LIMIT 1;')  # Prendi solo l'ultimo record
+    dati = cur.fetchall()
 
-    # Esecuzione della query per ottenere i dati (temperatura, umidità, fumo)
-    cur.execute('SELECT * FROM dati_arduino;')  
-    dati = cur.fetchall()  
-
-    # Chiusura della connessione
     cur.close()
     conn.close()
 
-    # Passa i dati al template
-    return render_template('index.html', dati=dati)
+    # Passa i dati e il nome utente al template
+    return render_template('index.html', dati=dati, username=session.get('username'))
 
 @app.route('/logout')
 def logout():
-    session.pop('user_id', None)  # Rimuove l'ID dell'utente dalla sessione
-    return redirect(url_for('login'))  # Redirige alla pagina di login
+    session.pop('user_id', None)     # Rimuove user_id
+    session.pop('username', None)    # Rimuove username
+    return redirect(url_for('login'))  # Torna al login
 
 if __name__ == "__main__":
     app.run(debug=True)
