@@ -1,192 +1,248 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="it">
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Dashboard FireGuard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <style>
-      /* Sidebar */
-      .sidebar {
-        position: fixed;
-        top: 0;
-        left: -250px;
-        height: 100%;
-        width: 250px;
-        background-color: #343a40;
-        padding-top: 20px;
-        color: white;
-        transition: all 0.3s ease;
-      }
 
-      .sidebar a {
-        color: white;
-        padding: 10px 15px;
-        text-decoration: none;
-        font-size: 18px;
-        display: block;
-      }
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <meta name="description" content="">
+  <meta name="author" content="">
 
-      .sidebar a:hover {
-        background-color: #575757;
-      }
+  <title>Dashboard FireGuard360</title>
 
-      .content {
-        margin-left: 0;
-        padding: 20px;
-        transition: margin-left 0.3s ease;
-      }
+  <!-- Bootstrap e CSS -->
+  <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
 
-      .card {
-        border-radius: 10px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-        transition: all 0.3s ease;
-      }
+<body id="page-top">
 
-      .card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
-      }
+  <div id="wrapper">
 
-      .card-header {
-        background-color: #007bff;
-        color: white;
-      }
+    <!-- Sidebar -->
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
 
-      .card-body {
-        background-color: #f8f9fa;
-      }
+      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
+        <div class="sidebar-brand-icon rotate-n-15">
+          <i class="fas fa-fire"></i>
+        </div>
+        <div class="sidebar-brand-text mx-3">FireGuard360</div>
+      </a>
 
-      .card-title {
-        font-size: 1.5rem;
-        font-weight: bold;
-      }
+      <hr class="sidebar-divider my-0">
 
-      .row {
-        margin-top: 30px;
-      }
+      <li class="nav-item active">
+        <a class="nav-link" href="index.html">
+          <i class="fas fa-fw fa-tachometer-alt"></i>
+          <span>Dashboard</span></a>
+      </li>
 
-      .btn-custom {
-        background-color: #28a745;
-        color: white;
-        border-radius: 5px;
-      }
+      <hr class="sidebar-divider">
 
-      .btn-custom:hover {
-        background-color: #218838;
-      }
+      <div class="sidebar-heading">Sezioni</div>
 
-      .menu-toggle {
-      font-size: 30px;
-      color: black; 
-      cursor: pointer;
-}
-    </style>
-  </head>
-  <body>
+      <li class="nav-item">
+        <a class="nav-link" href="#dati">
+          <i class="fas fa-fw fa-temperature-high"></i>
+          <span>Dati Arduino</span>
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link" href="#controlli">
+          <i class="fas fa-fw fa-tools"></i>
+          <span>Controllo</span>
+        </a>
+      </li>
 
-    <!-- Menu toggle icon (Hamburger icon) -->
-    <div class="menu-toggle" onclick="toggleSidebar()">&#9776; Menu</div>
+      <hr class="sidebar-divider">
 
-    <!-- Sidebar (Hidden initially) -->
-    <div class="sidebar" id="sidebar">
-      <h2 class="text-center text-white">FireGuard</h2>
-      <a href="#user">Utenza</a>
-      <a href="#dati">Dati Arduino</a>
-      <a href="#controlli">Controllo</a>
-      <a href="#statistiche">Statistiche</a>
-    </div>
+      <li class="nav-item">
+        <a class="nav-link" href="{{ url_for('logout') }}" data-toggle="modal" data-target="#logoutModal">
+          <i class="fas fa-fw fa-sign-out-alt"></i>
+          <span>Logout</span>
+        </a>
+      </li>
+    </ul>
 
-    <!-- Main content -->
-    <div class="content" id="content">
-      <h1 class="text-center mb-5">Dashboard FireGuard</h1>
+    <div id="content-wrapper" class="d-flex flex-column">
 
-      <!-- Card for monitoring data -->
-      <div id="dati" class="row">
-        <!-- Temperature -->
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="card-title">Temperatura</h4>
+      <div id="content">
+
+        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
+          <ul class="navbar-nav ml-auto">
+            <li class="nav-item dropdown no-arrow">
+              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
+                aria-haspopup="true" aria-expanded="false">
+                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ username }}</span>
+                <img class="img-profile rounded-circle"
+                  src="{{ url_for('static', filename='img/undraw_profile.svg') }}">
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="container-fluid">
+          <div id="dati" class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Temperatura Attuale</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dati[0][1] }}°C</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div class="card-body text-center">
-              <h2 id="temperature">{{ dati[0][1] }}°C</h2>  <!-- Dynamically insert temperature -->
-              <p>Temperatura attuale monitorata da Arduino</p>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Umidità Attuale</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dati[0][2] }}%</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-tint fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-xl-3 col-md-6 mb-4">
+              <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Fumo Attuale</div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dati[0][3] }} ppm</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-smoking fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div id="controlli" class="row">
+            <div class="col-md-6">
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Controllo Finestra</h6>
+                </div>
+                <div class="card-body text-center">
+                  <button class="btn btn-success" id="finestra-btn">Apri Finestra</button>
+                  <button class="btn btn-outline-secondary mt-2 d-none" id="undo-finestra-btn">Annulla Azione</button>
+                </div>
+              </div>
+            </div>
+
+            <div class="col-md-6">
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Drone di Emergenza</h6>
+                </div>
+                <div class="card-body text-center">
+                  <button class="btn btn-success" id="drone-btn">Attiva Drone</button>
+                  <button class="btn btn-outline-secondary mt-2 d-none" id="undo-drone-btn">Annulla Azione</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <!-- Humidity -->
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="card-title">Umidità</h4>
-            </div>
-            <div class="card-body text-center">
-              <h2 id="humidity">{{ dati[0][2] }}%</h2>  <!-- Dynamically insert humidity -->
-              <p>Umidità attuale monitorata da Arduino</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Smoke -->
-        <div class="col-md-4">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="card-title">Fumo</h4>
-            </div>
-            <div class="card-body text-center">
-              <h2 id="smoke">{{ dati[0][3] }} ppm</h2>  <!-- Dynamically insert smoke level -->
-              <p>Fumo attuale rilevato da Arduino</p>
-            </div>
-          </div>
-        </div>
       </div>
 
-      <!-- Card for control -->
-      <div id="controlli" class="row">
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="card-title">Controllo Finestra</h4>
-            </div>
-            <div class="card-body text-center">
-              <button class="btn btn-custom">Apri Finestra</button>
-            </div>
-          </div>
-        </div>
-
-        <div class="col-md-6">
-          <div class="card">
-            <div class="card-header">
-              <h4 class="card-title">Drone di Emergenza</h4>
-            </div>
-            <div class="card-body text-center">
-              <button class="btn btn-custom">Attiva Drone</button>
-            </div>
-          </div>
-        </div>
-      </div>
     </div>
 
-    <!-- Optional JavaScript -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  </div>
 
-    <script>
-      // Function to toggle sidebar visibility
-      function toggleSidebar() {
-        const sidebar = document.getElementById('sidebar');
-        const content = document.getElementById('content');
-        const isVisible = sidebar.style.left === '0px';
+  <!-- Toast container -->
+  <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
+    <div id="action-toast" class="toast bg-primary text-white" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="toast-header bg-primary text-white">
+        <strong class="me-auto">FireGuard360</strong>
+        <small>Ora</small>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+      <div class="toast-body" id="toast-message"></div>
+    </div>
+  </div>
 
-        if (isVisible) {
-          sidebar.style.left = '-250px'; // Hide sidebar
-          content.style.marginLeft = '0'; // Adjust content margin
-        } else {
-          sidebar.style.left = '0'; // Show sidebar
-          content.style.marginLeft = '250px'; // Adjust content margin
-        }
-      }
-    </script>
-  </body>
+ <!-- Logout Modal-->
+<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLabel">Sei sicuro di voler uscire?</h5>
+              <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">×</span>
+              </button>
+          </div>
+          <div class="modal-body">Sei pronto per terminare la tua sessione.</div>
+          <div class="modal-footer">
+              <button class="btn btn-secondary" type="button" data-dismiss="modal">Annulla</button>
+              <a class="btn btn-primary" href="{{ url_for('logout') }}">Logout</a>
+          </div>
+      </div>
+  </div>
+</div>
+
+  <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
+
+  <script>
+    function showToast(message) {
+      const toastMessage = document.getElementById('toast-message');
+      toastMessage.textContent = message;
+      const toast = new bootstrap.Toast(document.getElementById('action-toast'));
+      toast.show();
+    }
+
+    document.getElementById('finestra-btn').addEventListener('click', function () {
+      this.classList.remove('btn-success');
+      this.classList.add('btn-danger');
+      this.textContent = 'Finestra Aperta';
+      showToast('Comando finestra inviato con successo!');
+      document.getElementById('undo-finestra-btn').classList.remove('d-none');
+    });
+
+    document.getElementById('drone-btn').addEventListener('click', function () {
+      this.classList.remove('btn-success');
+      this.classList.add('btn-danger');
+      this.textContent = 'Drone Attivato';
+      showToast('Comando drone inviato con successo!');
+      document.getElementById('undo-drone-btn').classList.remove('d-none');
+    });
+
+    document.getElementById('undo-finestra-btn').addEventListener('click', function () {
+      const btn = document.getElementById('finestra-btn');
+      btn.classList.remove('btn-danger');
+      btn.classList.add('btn-success');
+      btn.textContent = 'Apri Finestra';
+      this.classList.add('d-none');
+      showToast('Azione finestra annullata.');
+    });
+
+    document.getElementById('undo-drone-btn').addEventListener('click', function () {
+      const btn = document.getElementById('drone-btn');
+      btn.classList.remove('btn-danger');
+      btn.classList.add('btn-success');
+      btn.textContent = 'Attiva Drone';
+      this.classList.add('d-none');
+      showToast('Azione drone annullata.');
+    });
+  </script>
+
+</body>
+
 </html>
