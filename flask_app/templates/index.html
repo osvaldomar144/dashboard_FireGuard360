@@ -13,6 +13,120 @@
   <!-- Bootstrap e CSS -->
   <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- Aggiungi il CSS per il Date Range Picker -->
+  <link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet">
+
+  <style>
+    #content-wrapper {
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      padding-bottom: 30px;  /* Aggiungi uno spazio tra il contenuto e il fondo */
+    }
+
+    .chart-card {
+      height: 200px;  /* Impostare l'altezza a 150px o un valore più piccolo */
+      width: 90%;     /* Impostare la larghezza al 80% del contenitore */
+      margin: 0 auto; /* Centra i grafici orizzontalmente */
+      margin-bottom: 10px;  /* Spazio tra i grafici */
+    }
+
+    #content-wrapper .row .col-xl-3:first-child {
+      margin-left: 40px; /* Modifica il valore per ottenere più o meno spazio */
+    }
+
+    #controlli .col-md-5:first-child {
+      margin-left: 40px;
+    }
+
+    #temperatura-chart, #fumo-chart, #umidita-chart {
+      margin-left: 10px; 
+    }
+
+    #filter-button-container {
+      display: flex;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 10px;
+    }
+
+    button {
+      font-size: 14px;
+      padding: 8px 15px;
+    }
+
+
+     /* Aumenta la larghezza degli input */
+#start-date, #end-date {
+  width: 200px; /* Puoi modificare il valore per aumentare la larghezza */
+  height: 42px;
+}
+
+/* Aggiungi uno stile per il contenitore del filtro per allineare meglio gli elementi */
+.filter-container {
+  display: flex;
+  justify-content: flex-start; /* Allinea gli input e il pulsante a sinistra */
+  align-items: center; 
+ 
+  margin-top: 20px; /* Distanza tra il filtro e i grafici */
+}
+
+/* Imposta la larghezza dell'input data */
+.filter-container .form-control {
+  width: 150px; /* Imposta la larghezza dell'input data */
+}
+
+.filter-container label {
+  font-weight: bold;
+  margin-left: 40px;
+
+}
+
+/* Allinea il pulsante al contenuto */
+.filter-container .btn {
+  padding: 10px 20px;
+  font-size: 14px;
+  margin-bottom: -20px;
+}
+
+/* Modifica layout dei container per avere una disposizione orizzontale */
+.col-md-4 {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+.col-md-4-fine{
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.col-md-4 label {
+  margin-bottom: 5px;
+}
+.col-md-4-fine label{
+  margin-left: -150px;
+}
+.col-md-4-fine input {
+  margin-bottom: 13px;
+}
+
+.col-md-4 input {
+  margin-bottom: 10px;
+}
+
+#start-date{
+    margin-left: 40px; /* Puoi modificare il valore per aumentare la larghezza */
+  }
+
+  #end-date{
+    margin-left: -150px; /* Puoi modificare il valore per aumentare la larghezza */
+  }
+
+
+  </style>
 </head>
 
 <body id="page-top">
@@ -81,125 +195,143 @@
           </ul>
         </nav>
 
-        <div class="container-fluid">
-          <div id="dati" class="row">
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-primary shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Temperatura Attuale</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dati[0][1] }}°C</div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
-                    </div>
+        <!-- Card Section -->
+        <div class="row">
+          <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+              <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Temperatura Attuale</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="temperatura">Caricamento...</div>
                   </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-success shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Umidità Attuale</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dati[0][2] }}%</div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-tint fa-2x text-gray-300"></i>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="col-xl-3 col-md-6 mb-4">
-              <div class="card border-left-info shadow h-100 py-2">
-                <div class="card-body">
-                  <div class="row no-gutters align-items-center">
-                    <div class="col mr-2">
-                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Fumo Attuale</div>
-                      <div class="h5 mb-0 font-weight-bold text-gray-800">{{ dati[0][3] }} ppm</div>
-                    </div>
-                    <div class="col-auto">
-                      <i class="fas fa-smoking fa-2x text-gray-300"></i>
-                    </div>
+                  <div class="col-auto">
+                    <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div id="controlli" class="row">
-            <div class="col-md-6">
-              <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                  <h6 class="m-0 font-weight-bold text-primary">Controllo Finestra</h6>
-                </div>
-                <div class="card-body text-center">
-                  <button class="btn btn-success" id="finestra-btn">Apri Finestra</button>
-                  <button class="btn btn-outline-secondary mt-2 d-none" id="undo-finestra-btn">Annulla Azione</button>
+          <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+              <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Umidità Attuale</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="umidita">Caricamento...</div>
+                  </div>
+                  <div class="col-auto">
+                    <i class="fas fa-tint fa-2x text-gray-300"></i>
+                  </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div class="col-md-6">
-              <div class="card shadow mb-4">
-                <div class="card-header py-3">
-                  <h6 class="m-0 font-weight-bold text-primary">Drone di Emergenza</h6>
-                </div>
-                <div class="card-body text-center">
-                  <button class="btn btn-success" id="drone-btn">Attiva Drone</button>
-                  <button class="btn btn-outline-secondary mt-2 d-none" id="undo-drone-btn">Annulla Azione</button>
+          <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+              <div class="card-body">
+                <div class="row no-gutters align-items-center">
+                  <div class="col mr-2">
+                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Fumo Attuale</div>
+                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="fumo">Caricamento...</div>
+                  </div>
+                  <div class="col-auto">
+                    <i class="fas fa-smoking fa-2x text-gray-300"></i>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
+        <!-- Controlli -->
+        <div id="controlli" class="row">
+          <div class="col-md-5">
+            <div class="card shadow mb-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Controllo Finestra</h6>
+              </div>
+              <div class="card-body text-center">
+                <button class="btn btn-success" id="finestra-btn">Apri Finestra</button>
+                <button class="btn btn-outline-secondary mt-2 d-none" id="undo-finestra-btn">Annulla Azione</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="col-md-5">
+            <div class="card shadow mb-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Drone di Emergenza</h6>
+              </div>
+              <div class="card-body text-center">
+                <button class="btn btn-success" id="drone-btn">Attiva Drone</button>
+                <button class="btn btn-outline-secondary mt-2 d-none" id="undo-drone-btn">Annulla Azione</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filtro per il range di date con Bootstrap Date Range Picker -->
+        <div class="row mt-4 filter-container">
+          <div class="col-md-4">
+            <label for="start-date">Data Inizio</label>
+            <input type="date" id="start-date" class="form-control">
+          </div>
+          <div class="col-md-4-fine ">
+            <label for="end-date">Data Fine</label>
+            <input type="date" id="end-date" class="form-control">
+          </div>
+          <div class="col-md-4">
+            <button class="btn btn-primary" onclick="filterData()">Filtra Dati</button>
+          </div>
+        </div>
+
+        <div class="row mt-4">
+          <!-- Grafico della Temperatura -->
+          <div class="col-lg-6 mb-4">
+            <canvas id="temperatura-chart" class="chart-card"></canvas>
+          </div>
+          <!-- Grafico dell'Umidità -->
+          <div class="col-lg-6 mb-4">
+            <canvas id="umidita-chart" class="chart-card"></canvas>
+          </div>
+        </div>
+        <div class="row mt-4">
+          <!-- Grafico del Fumo -->
+          <div class="col-lg-6 mb-4">
+            <canvas id="fumo-chart" class="chart-card"></canvas>
+          </div>
+        </div>
       </div>
-
     </div>
-
   </div>
 
-  <!-- Toast container -->
-  <div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;">
-    <div id="action-toast" class="toast bg-primary text-white" role="alert" aria-live="assertive" aria-atomic="true">
-      <div class="toast-header bg-primary text-white">
-        <strong class="me-auto">FireGuard360</strong>
-        <small>Ora</small>
-        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-      </div>
-      <div class="toast-body" id="toast-message"></div>
-    </div>
-  </div>
-
- <!-- Logout Modal-->
-<div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog" role="document">
+  <!-- Modal per il logout -->
+  <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
       <div class="modal-content">
-          <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalLabel">Sei sicuro di voler uscire?</h5>
-              <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-                  <span aria-hidden="true">×</span>
-              </button>
-          </div>
-          <div class="modal-body">Sei pronto per terminare la tua sessione.</div>
-          <div class="modal-footer">
-              <button class="btn btn-secondary" type="button" data-dismiss="modal">Annulla</button>
-              <a class="btn btn-primary" href="{{ url_for('logout') }}">Logout</a>
-          </div>
+        <div class="modal-header">
+          <h5 class="modal-title" id="logoutModalLabel">Sei sicuro di voler uscire?</h5>
+          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">×</span>
+          </button>
+        </div>
+        <div class="modal-body">Clicca su "Logout" per uscire.</div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" type="button" data-dismiss="modal">Annulla</button>
+          <a class="btn btn-primary" href="{{ url_for('logout') }}">Logout</a>
+        </div>
       </div>
+    </div>
   </div>
-</div>
 
   <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
   <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
-
+  <script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
   <script>
     function showToast(message) {
       const toastMessage = document.getElementById('toast-message');
@@ -208,41 +340,113 @@
       toast.show();
     }
 
-    document.getElementById('finestra-btn').addEventListener('click', function () {
-      this.classList.remove('btn-success');
-      this.classList.add('btn-danger');
-      this.textContent = 'Finestra Aperta';
-      showToast('Comando finestra inviato con successo!');
-      document.getElementById('undo-finestra-btn').classList.remove('d-none');
-    });
+    function createChart(chartId, labels, data, label, color, chartType) {
+  // Distruggi il grafico esistente (se presente)
+  const existingChart = Chart.getChart(chartId); // Recupera il grafico esistente
+  if (existingChart) {
+    existingChart.destroy(); // Distruggi il grafico esistente
+  }
 
-    document.getElementById('drone-btn').addEventListener('click', function () {
-      this.classList.remove('btn-success');
-      this.classList.add('btn-danger');
-      this.textContent = 'Drone Attivato';
-      showToast('Comando drone inviato con successo!');
-      document.getElementById('undo-drone-btn').classList.remove('d-none');
-    });
+  // Crea un nuovo grafico
+  new Chart(document.getElementById(chartId), {
+    type: chartType,
+    data: {
+      labels: labels,
+      datasets: [{
+        label: label,
+        data: data,
+        backgroundColor: color,
+        borderColor: color,
+        borderWidth: 1,
+        fill: false,
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: true,
+      animation: {
+        duration: 1000,
+        easing: 'easeInOutCubic',
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Data/Ora'
+          },
+          ticks: {
+            display: false
+          }
+        },
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: label
+          }
+        }
+      }
+    }
+  });
+}
 
-    document.getElementById('undo-finestra-btn').addEventListener('click', function () {
-      const btn = document.getElementById('finestra-btn');
-      btn.classList.remove('btn-danger');
-      btn.classList.add('btn-success');
-      btn.textContent = 'Apri Finestra';
-      this.classList.add('d-none');
-      showToast('Azione finestra annullata.');
-    });
+function filterData() {
+  const startDate = document.getElementById('start-date').value;
+  const endDate = document.getElementById('end-date').value;
 
-    document.getElementById('undo-drone-btn').addEventListener('click', function () {
-      const btn = document.getElementById('drone-btn');
-      btn.classList.remove('btn-danger');
-      btn.classList.add('btn-success');
-      btn.textContent = 'Attiva Drone';
-      this.classList.add('d-none');
-      showToast('Azione drone annullata.');
-    });
+  if (!startDate || !endDate) {
+    alert('Per favore, seleziona un intervallo di date valido.');
+    return;
+  }
+
+  // Aggiungi l'ora per le date
+  const startDateTime = `${startDate} 00:00:00`;  // Inizio del giorno
+  const endDateTime = `${endDate} 23:59:59`;  // Fine del giorno
+
+  // Codifica correttamente i parametri della query
+  const startDateEncoded = encodeURIComponent(startDateTime);
+  const endDateEncoded = encodeURIComponent(endDateTime);
+
+  // Fai una richiesta AJAX al backend per ottenere i dati filtrati
+  fetch(`/get_data_filter?start_date=${startDateEncoded}&end_date=${endDateEncoded}`)
+    .then(response => response.json())
+    .then(data => {
+      updateCharts(data);
+    })
+    .catch(error => console.error('Errore nel recupero dei dati:', error));
+}
+
+    function updateCharts(data) {
+      const dataLabels = data.map(item => item.data_ora);
+      const temperaturaData = data.map(item => item.temperatura);
+      const umiditaData = data.map(item => item.umidita);
+      const fumoData = data.map(item => item.fumo);
+
+      createChart('temperatura-chart', dataLabels, temperaturaData, 'Temperatura (°C)', 'rgb(255, 99, 132)', 'line');
+      createChart('umidita-chart', dataLabels, umiditaData, 'Umidità (%)', 'rgb(54, 162, 235)', 'line');
+      createChart('fumo-chart', dataLabels, fumoData, 'Fumo (ppm)', 'rgb(75, 192, 192)', 'bar');
+    }
+
+    window.onload = function() {
+      fetch('/get_data')
+        .then(response => response.json())
+        .then(data => {
+          const dataLabels = data.map(item => item.data_ora);
+          const temperaturaData = data.map(item => item.temperatura);
+          const umiditaData = data.map(item => item.umidita);
+          const fumoData = data.map(item => item.fumo);
+
+          createChart('temperatura-chart', dataLabels, temperaturaData, 'Temperatura (°C)', 'rgb(255, 99, 132)', 'line');
+          createChart('umidita-chart', dataLabels, umiditaData, 'Umidità (%)', 'rgb(54, 162, 235)', 'line');
+          createChart('fumo-chart', dataLabels, fumoData, 'Fumo (ppm)', 'rgb(75, 192, 192)', 'bar');
+
+          document.getElementById('temperatura').textContent = `${temperaturaData[0]} °C`;
+          document.getElementById('umidita').textContent = `${umiditaData[0]} %`;
+          document.getElementById('fumo').textContent = `${fumoData[0]} ppm`;
+        })
+        .catch(error => console.error('Error fetching data:', error));
+    }
   </script>
-
 </body>
 
 </html>
