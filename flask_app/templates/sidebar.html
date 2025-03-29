@@ -1,0 +1,53 @@
+<ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+
+    <a class="sidebar-brand d-flex align-items-center justify-content-center" href="{{ url_for('index') }}">
+      <div class="sidebar-brand-icon rotate-n-15">
+        <i class="fas fa-fire"></i>
+      </div>
+      <div class="sidebar-brand-text mx-3">FireGuard360</div>
+    </a>
+  
+    <hr class="sidebar-divider my-0">
+  
+    <li class="nav-item {% if request.endpoint == 'index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('index') }}">
+        <i class="fas fa-fw fa-tachometer-alt"></i>
+        <span>Dashboard</span></a>
+    </li>
+  
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading">Sezioni</div>
+  
+    <li class="nav-item {% if request.endpoint == 'dati_arduino' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('dati_arduino') }}">
+        <i class="fas fa-fw fa-database"></i>
+        <span>Dati Arduino</span>
+      </a>
+    </li>
+    
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('index') }}#controlli">
+        <i class="fas fa-fw fa-tools"></i>
+        <span>Controllo</span></a>
+    </li>
+    <li class="nav-item">
+      <a class="nav-link" href="#storico-allarmi">
+        <i class="fas fa-fw fa-bell"></i>
+        <span>Storico Allarmi</span></a>
+    </li>
+    <li class="nav-item {% if request.endpoint == 'drone_page' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('drone_page') }}">
+        <i class="fas fa-fw fa-robot"></i>
+        <span>Drone</span></a>
+    </li>
+  
+    <hr class="sidebar-divider">
+  
+    <li class="nav-item">
+      <a class="nav-link" href="{{ url_for('logout') }}" data-toggle="modal" data-target="#logoutModal">
+        <i class="fas fa-fw fa-sign-out-alt"></i>
+        <span>Logout</span></a>
+    </li>
+  
+  </ul>
+  

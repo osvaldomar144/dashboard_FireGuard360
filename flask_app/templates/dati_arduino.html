@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dati Arduino - FireGuard360</title>
+  <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap4.min.css">
+  <style>
+    .table-responsive {
+      padding: 1rem;
+    }
+    .chart-section {
+      padding: 1rem 2rem;
+    }
+    .chart-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      padding: 20px;
+      margin-bottom: 20px;
+    }
+   
+    .col-md-3{
+        margin-left: 40px;
+        padding: 0px;
+    }
+
+    .dt-buttons .btn {
+  background-color: white;
+  color: inherit;
+  transition: all 0.2s ease-in-out;
+}
+
+
+/* Hover: comportamento nativo Bootstrap outline */
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+.btn-outline-success:hover {
+  background-color: #198754;
+  color: white;
+  border-color: #198754;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+.btn-outline-secondary {
+  color: #6c757d;
+  border-color: #ced4da;         /* grigio chiarissimo */
+  background-color: white;
+}
+
+.btn-outline-secondary:hover {
+  background-color: #e2e6ea;     /* grigio soft al passaggio */
+  border-color: #adb5bd;
+  color: #212529;
+}
+.dt-buttons .btn {
+  margin-right: 8px;
+  margin-bottom: 6px;
+}
+
+div.dataTables_wrapper div.dataTables_length,
+div.dataTables_wrapper div.dataTables_filter {
+  display: inline-block;
+  margin-bottom: 10px;
+  vertical-align: middle;
+}
+
+/* Allinea search a destra */
+div.dataTables_wrapper div.dataTables_filter {
+  float: right;
+}
+
+/* Allinea "Show entries" a sinistra */
+div.dataTables_wrapper div.dataTables_length {
+  float: left;
+}
+
+/* Spazio tra pulsanti di esportazione e i controlli */
+div.top-buttons {
+  margin-bottom: 10px;
+}
+
+/* Allinea Show entries e Search affiancati */
+div.top-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 10px;
+}
+
+div.top-controls .dataTables_length,
+div.top-controls .dataTables_filter {
+  margin: 0;
+}
+
+  </style>
+</head>
+
+<body id="page-top">
+  <div id="wrapper">
+    {% include 'sidebar.html' %}
+
+    <div id="content-wrapper" class="d-flex flex-column">
+      <div id="content">
+        {% include 'topbar.html' %}
+
+        <div class="container-fluid">
+          <h1 class="h3 mb-4 text-gray-800">Dati Arduino - Storico Completo</h1>
+
+          <!-- Sezione Tabella -->
+          <div class="card shadow mb-4">
+            <div class="card-header py-3">
+              <h6 class="m-0 font-weight-bold text-primary">📄 Tabella dati registrati</h6>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="datiArduinoTable" class="table table-bordered" width="100%" cellspacing="0">
+                  <thead>
+                    <tr>
+                      <th>ID</th>
+                      <th>Data/Ora</th>
+                      <th>Temperatura (°C)</th>
+                      <th>Umidità (%)</th>
+                      <th>Fumo (ppm)</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for dato in dati %}
+                      <tr>
+                        <td>{{ dato.id }}</td>
+                        <td>{{ dato.data_ora }}</td>
+                        <td>{{ dato.temperatura }}</td>
+                        <td>{{ dato.umidita }}</td>
+                        <td>{{ dato.fumo }}</td>
+                      </tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="row align-items-end mb-4">
+            <div class="col-md-3">
+              <label for="startDate" class="form-label">Data Inizio</label>
+              <input type="date" id="startDate" class="form-control">
+            </div>
+            <div class="col-md-3">
+              <label for="endDate" class="form-label">Data Fine</label>
+              <input type="date" id="endDate" class="form-control">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+              <button class="btn btn-primary w-85" onclick="filterChartData()">Filtra</button>
+            </div>
+          </div>
+
+          <!-- Sezione Grafici secondari -->
+          <div class="row chart-section">
+            <div class="col-lg-6">
+              <div class="chart-card">
+                <h6 class="text-primary">Temperatura - Ultimi dati</h6>
+                <canvas id="chartTemperatura"></canvas>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartTemperatura', 'grafico_temperatura')">
+                    📤 Esporta Grafico
+                  </button>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="chart-card">
+                <h6 class="text-primary">Fumo - Ultimi dati</h6>
+                <canvas id="chartFumo"></canvas>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartFumo', 'grafico_fumo')">
+                    📤 Esporta Grafico
+                  </button>
+              </div>
+            </div>
+            <div class="col-lg-6">
+              <div class="chart-card">
+                <h6 class="text-primary">Umidità - Ultimi dati</h6>
+                <canvas id="chartUmidita"></canvas>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartUmidita', 'grafico_umidita')">
+                    📤 Esporta Grafico
+                  </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap4.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+
+  <script>
+    let temperaturaChart;
+    let umiditaChart;
+    let fumoChart;
+  
+    $(document).ready(function () {
+        $('#datiArduinoTable').DataTable({
+  dom: '<"top-buttons"B><"top-controls"lf>rtip',
+  buttons: [
+    {
+      extend: 'csv',
+      text: '📥 Esporta CSV',
+      className: 'btn btn-outline-primary btn-sm'
+    },
+    {
+      extend: 'excel',
+      text: '📊 Esporta Excel',
+      className: 'btn btn-outline-success btn-sm'
+    },
+    {
+      extend: 'pdf',
+      text: '📄 Esporta PDF',
+      className: 'btn btn-outline-danger btn-sm'
+    },
+    {
+      extend: 'print',
+      text: '🖨️ Stampa',
+      className: 'btn btn-outline-secondary btn-sm'
+    }
+  ],
+  order: [[1, 'desc']]
+});
+  
+      // ✅ Conversione sicura da Flask a JavaScript
+      const labels = JSON.parse('{{ chart_labels | tojson | safe }}');
+      const temperatura = JSON.parse('{{ chart_temperatura | tojson | safe }}');
+      const fumo = JSON.parse('{{ chart_fumo | tojson | safe }}');
+      const umidita = JSON.parse('{{ chart_umidita | tojson | safe }}');
+  
+      temperaturaChart = new Chart(document.getElementById('chartTemperatura'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Temperatura',
+            data: temperatura,
+            backgroundColor: 'rgba(255, 99, 132, 0.2)',
+            borderColor: 'rgba(255, 99, 132, 1)',
+            borderWidth: 2,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+  
+      umiditaChart = new Chart(document.getElementById('chartUmidita'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Umidità',
+            data: umidita,
+            backgroundColor: 'rgba(75, 192, 192, 0.2)',
+            borderColor: 'rgba(75, 192, 192, 1)',
+            borderWidth: 2,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+  
+      fumoChart = new Chart(document.getElementById('chartFumo'), {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'Fumo',
+            data: fumo,
+            backgroundColor: 'rgba(54, 162, 235, 0.2)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 2,
+            tension: 0.3
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    });
+  
+    // ✅ Queste funzioni DEVONO essere fuori da $(document).ready()
+    function filterChartData() {
+      const startDate = document.getElementById('startDate').value;
+      const endDate = document.getElementById('endDate').value;
+  
+      if (!startDate || !endDate) {
+        alert("Inserisci entrambe le date!");
+        return;
+      }
+  
+      fetch(`/get_data_filter?start_date=${startDate} 00:00:00&end_date=${endDate} 23:59:59`)
+        .then(res => res.json())
+        .then(data => {
+  const labels = data.map(d => {
+    const date = new Date(d.data_ora);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  });
+
+  const temperatura = data.map(d => d.temperatura);
+  const umidita = data.map(d => d.umidita);
+  const fumo = data.map(d => d.fumo);
+
+  updateChart(temperaturaChart, labels, temperatura);
+  updateChart(fumoChart, labels, fumo);
+  updateChart(umiditaChart, labels, umidita);
+});
+    }
+  
+    function updateChart(chart, labels, data) {
+      chart.data.labels = labels;
+      chart.data.datasets[0].data = data;
+      chart.update();
+    }
+
+    function exportChart(canvasId, filename) {
+  const canvas = document.getElementById(canvasId);
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = `${filename}.png`;
+  link.click();
+}
+  </script>

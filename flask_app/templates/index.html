@@ -133,67 +133,13 @@
 
   <div id="wrapper">
 
-    <!-- Sidebar -->
-    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
-
-      <a class="sidebar-brand d-flex align-items-center justify-content-center" href="index.html">
-        <div class="sidebar-brand-icon rotate-n-15">
-          <i class="fas fa-fire"></i>
-        </div>
-        <div class="sidebar-brand-text mx-3">FireGuard360</div>
-      </a>
-
-      <hr class="sidebar-divider my-0">
-
-      <li class="nav-item active">
-        <a class="nav-link" href="index.html">
-          <i class="fas fa-fw fa-tachometer-alt"></i>
-          <span>Dashboard</span></a>
-      </li>
-
-      <hr class="sidebar-divider">
-
-      <div class="sidebar-heading">Sezioni</div>
-
-      <li class="nav-item">
-        <a class="nav-link" href="#dati">
-          <i class="fas fa-fw fa-temperature-high"></i>
-          <span>Dati Arduino</span>
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#controlli">
-          <i class="fas fa-fw fa-tools"></i>
-          <span>Controllo</span>
-        </a>
-      </li>
-
-      <hr class="sidebar-divider">
-
-      <li class="nav-item">
-        <a class="nav-link" href="{{ url_for('logout') }}" data-toggle="modal" data-target="#logoutModal">
-          <i class="fas fa-fw fa-sign-out-alt"></i>
-          <span>Logout</span>
-        </a>
-      </li>
-    </ul>
+    {% include 'sidebar.html' %}
 
     <div id="content-wrapper" class="d-flex flex-column">
 
       <div id="content">
 
-        <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow">
-          <ul class="navbar-nav ml-auto">
-            <li class="nav-item dropdown no-arrow">
-              <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-toggle="dropdown"
-                aria-haspopup="true" aria-expanded="false">
-                <span class="mr-2 d-none d-lg-inline text-gray-600 small">{{ username }}</span>
-                <img class="img-profile rounded-circle"
-                  src="{{ url_for('static', filename='img/undraw_profile.svg') }}">
-              </a>
-            </li>
-          </ul>
-        </nav>
+        {% include 'topbar.html' %}
 
         <!-- Card Section -->
         <div class="row">
@@ -256,18 +202,6 @@
               <div class="card-body text-center">
                 <button class="btn btn-success" id="finestra-btn">Apri Finestra</button>
                 <button class="btn btn-outline-secondary mt-2 d-none" id="undo-finestra-btn">Annulla Azione</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="col-md-5">
-            <div class="card shadow mb-4">
-              <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Drone di Emergenza</h6>
-              </div>
-              <div class="card-body text-center">
-                <button class="btn btn-success" id="drone-btn">Attiva Drone</button>
-                <button class="btn btn-outline-secondary mt-2 d-none" id="undo-drone-btn">Annulla Azione</button>
               </div>
             </div>
           </div>
