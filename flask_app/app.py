@@ -136,14 +136,6 @@ def get_stats():
     cur.execute(f"SELECT AVG(temperatura), AVG(umidita), AVG(fumo) FROM dati_arduino {filtro_arduino}")
     media = cur.fetchone()
 
-    # Numero di eventi critici o allarmi
-    cur.execute(f"""
-        SELECT COUNT(*) FROM eventi
-        WHERE (evento LIKE '%allarme%' OR evento LIKE '%pericolo%')
-        AND data_ora IS NOT NULL {filtro_eventi}
-    """)
-    allarmi = cur.fetchone()[0]
-
     cur.close()
     conn.close()
 
@@ -151,7 +143,7 @@ def get_stats():
         "media_temperatura": round(media[0], 1) if media[0] else 0,
         "media_umidita": round(media[1], 1) if media[1] else 0,
         "media_fumo": round(media[2], 1) if media[2] else 0,
-        "numero_allarmi": allarmi
+       
     })
 
 @app.route('/get_data_filter', methods=['GET'])
@@ -229,6 +221,38 @@ def dati_arduino():
         chart_umidita=umidita  # 👈 aggiunto
     )
 
+@app.route('/allarmi')
+def allarmi():
+    return render_template('allarmi.html')
+
+@app.route('/get_allarmi_storico')
+def get_allarmi_storico():
+    data_da = request.args.get('da')
+    data_a = request.args.get('a')
+
+    conn = get_db_connection()
+    cur = conn.cursor(dictionary=True)
+
+    query = """
+        SELECT data_ora, evento 
+        FROM eventi 
+        WHERE (evento LIKE '%attenzione%' OR evento LIKE '%pericolo%')
+    """
+    params = []
+
+    if data_da and data_a:
+        query += " AND DATE(data_ora) BETWEEN %s AND %s"
+        params.extend([data_da, data_a])
+
+    query += " ORDER BY data_ora DESC"
+
+    cur.execute(query, params)
+    risultati = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    return jsonify(risultati)
 
 def get_mock_battery_level():
     return random.randint(0, 100)

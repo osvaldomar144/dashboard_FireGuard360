@@ -31,10 +31,12 @@
         <span>Controllo</span></a>
     </li>
     <li class="nav-item">
-      <a class="nav-link" href="#storico-allarmi">
+      <a class="nav-link" href="{{ url_for('allarmi') }}">
         <i class="fas fa-fw fa-bell"></i>
-        <span>Storico Allarmi</span></a>
+        <span>Storico Allarmi</span>
+      </a>
     </li>
+    
     <li class="nav-item {% if request.endpoint == 'drone_page' %}active{% endif %}">
       <a class="nav-link" href="{{ url_for('drone_page') }}">
         <i class="fas fa-fw fa-robot"></i>

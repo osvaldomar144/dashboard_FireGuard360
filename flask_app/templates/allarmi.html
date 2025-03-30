@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Storico Allarmi - FireGuard360</title>
+
+  <!-- CSS -->
+  <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+
+  <style>
+    .log-table td,
+    .log-table th {
+      font-size: 0.9rem;
+    }
+    .top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    .top-buttons {
+      margin-bottom: 10px;
+    }
+    .dt-buttons .btn {
+      background-color: white;
+      color: inherit;
+      transition: all 0.2s ease-in-out;
+      margin-right: 8px;
+    }
+    .btn-outline-primary:hover {
+      background-color: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+    .btn-outline-success:hover {
+      background-color: #198754;
+      color: white;
+      border-color: #198754;
+    }
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      color: white;
+      border-color: #dc3545;
+    }
+    .btn-outline-secondary:hover {
+      background-color: #e2e6ea;
+      color: #212529;
+      border-color: #adb5bd;
+    }
+    .badge-evento {
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.5em 0.75em;
+    }
+
+    .custom-datepicker {
+  max-width: 150px !important;
+  min-width: 130px;
+  font-size: 0.875rem;
+  padding-right: 0.5rem;
+}
+
+.dropdown-menu {
+      min-width: 160px;
+    }
+  </style>
+</head>
+
+<body id="page-top">
+    <div id="wrapper">
+      {% include 'sidebar.html' %}
+  
+      <div id="content-wrapper" class="d-flex flex-column">
+        <div id="content">
+          {% include 'topbar.html' %}
+  
+          <div class="container-fluid">
+  
+            <div class="d-flex justify-content-between align-items-center mb-4">
+              <h1 class="h3 text-gray-800">Storico Allarmi</h1>
+            </div>
+  
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <p class="mb-0 text-muted" id="totale-eventi">Totale eventi registrati: 0</p>
+              <div class="d-flex align-items-center">
+                <button class="btn btn-outline-warning btn-sm mr-2" onclick="filtraPerTipo('attenzione')">Allarmi</button>
+                <button class="btn btn-outline-danger btn-sm mr-2" onclick="filtraPerTipo('pericolo')">Pericoli</button>
+                <button class="btn btn-outline-primary btn-sm mr-2" onclick="caricaStorico()">Tutti</button>
+                <button class="btn btn-sm btn-outline-secondary" onclick="caricaStorico()">
+                  <i class="fas fa-sync-alt mr-1"></i> Aggiorna
+                </button>
+              </div>
+            </div>
+  
+            <div class="card shadow mb-4">
+              <div class="card-header py-3">
+                <h6 class="m-0 font-weight-bold text-primary">Eventi di Allarme e Pericolo Rilevati</h6>
+              </div>
+              <div class="card-body">
+                <div class="table-responsive">
+                  <table id="storicoTable" class="table table-bordered log-table" width="100%">
+                    <thead>
+                      <tr>
+                        <th>Data/Ora</th>
+                        <th>Evento</th>
+                      </tr>
+                    </thead>
+                    <tbody></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+  
+            <div class="card shadow mb-4">
+              <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap">
+                <h6 class="m-0 font-weight-bold text-primary">📊 Andamento Giornaliero Allarmi e Pericoli</h6>
+                <div class="d-flex align-items-center">
+                  <label for="datepicker" class="mb-0 mr-2 small text-muted">📅 Seleziona giorno:</label>
+                  <input id="datepicker" type="text" class="form-control form-control-sm" size="24" style="width: auto;">
+                  <div class="dropdown ml-2">
+                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
+                      <i class="fas fa-file-export mr-1"></i> Esporta dati settimanali
+                    </button>
+                    <div class="dropdown-menu">
+                      <button class="dropdown-item dropdown-export-option" data-format="csv">📥 CSV</button>
+                      <button class="dropdown-item dropdown-export-option" data-format="excel">📊 Excel</button>
+                      <button class="dropdown-item dropdown-export-option" data-format="pdf">📄 PDF</button>
+                      <button class="dropdown-item dropdown-export-option" data-format="print">🖨️ Stampa</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="card-body">
+                <p class="text-muted small mb-2" id="intervallo-grafico">📅 Showing events from -- to --</p>
+                <canvas id="graficoEventi" height="130"></canvas>
+                <p class="mt-3 text-muted" id="stat-giorno-max">Day with most events: --</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <script>
+    let chartAllarmi = null;
+
+    function aggiornaGraficoEventi(data, startDate) {
+  const giorniSettimana = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const nomiCompleti = {
+    'Sun': 'Sunday', 'Mon': 'Monday', 'Tue': 'Tuesday',
+    'Wed': 'Wednesday', 'Thu': 'Thursday',
+    'Fri': 'Friday', 'Sat': 'Saturday'
+  };
+
+  const perGiorno = {};
+  const labels = [];
+  const shortLabels = [];
+
+  for (let i = 0; i < 7; i++) {
+    const giorno = new Date(startDate);
+    giorno.setDate(giorno.getDate() + i);
+    const key = giorno.getFullYear() + "-" + String(giorno.getMonth() + 1).padStart(2, '0') + "-" + String(giorno.getDate()).padStart(2, '0');
+    perGiorno[key] = { attenzione: 0, pericolo: 0 };
+    labels.push(key);
+    shortLabels.push(giorniSettimana[giorno.getDay()]);
+  }
+
+  data.forEach(ev => {
+    const evDate = new Date(ev.data_ora);
+    const key = evDate.getFullYear() + "-" + String(evDate.getMonth() + 1).padStart(2, '0') + "-" + String(evDate.getDate()).padStart(2, '0');
+    if (perGiorno[key]) {
+      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
+      perGiorno[key][tipo]++;
+    }
+  });
+
+  const datiAttenzione = labels.map(d => perGiorno[d].attenzione);
+  const datiPericolo = labels.map(d => perGiorno[d].pericolo);
+
+  const giornoTopIndex = datiAttenzione.map((val, i) => val + datiPericolo[i])
+    .reduce((maxIdx, val, idx, arr) => val > arr[maxIdx] ? idx : maxIdx, 0);
+
+  const giornoTop = shortLabels[giornoTopIndex];
+  const giornoTopData = labels[giornoTopIndex];
+
+  document.getElementById('stat-giorno-max').textContent =
+    `Day with most events: ${giornoTop} (${giornoTopData})`;
+
+  const ctx = document.getElementById('graficoEventi').getContext('2d');
+  if (chartAllarmi) {
+    chartAllarmi.data.labels = shortLabels;
+    chartAllarmi.data.datasets[0].data = datiAttenzione;
+    chartAllarmi.data.datasets[1].data = datiPericolo;
+    chartAllarmi.update();
+  } else {
+    chartAllarmi = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: shortLabels,
+        datasets: [
+          {
+            label: 'Allarmi',
+            data: datiAttenzione,
+            backgroundColor: '#0d6efd',
+            barThickness: 12
+          },
+          {
+            label: 'Pericoli',
+            data: datiPericolo,
+            backgroundColor: '#5a9bd5',
+            barThickness: 12
+          }
+        ]
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          tooltip: { mode: 'index', intersect: false }
+        },
+        scales: {
+          x: { beginAtZero: true }
+        }
+      }
+    });
+  }
+}
+
+
+function caricaGraficoDaData(dataInizio) {
+  const start = new Date(dataInizio);
+  start.setHours(0, 0, 0, 0);
+
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  end.setHours(23, 59, 59, 999);
+
+  const format = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+  document.getElementById("intervallo-grafico").textContent =
+    `📅 Showing events from ${format(start)} to ${format(end)}`;
+
+  fetch('/get_allarmi_storico')
+    .then(res => res.json())
+    .then(data => {
+      const filtrati = data.filter(ev => {
+        const d = new Date(ev.data_ora);
+        return d >= start && d <= end;
+      });
+      aggiornaGraficoEventi(filtrati, start); // 👉 passa la data iniziale
+    });
+}
+    function caricaStorico() {
+      fetch('/get_allarmi_storico')
+        .then(res => res.json())
+        .then(data => {
+          document.getElementById('totale-eventi').textContent = `Totale eventi registrati: ${data.length}`;
+          const table = $('#storicoTable').DataTable();
+          table.clear();
+          data.forEach(ev => {
+            const eventoLower = ev.evento.toLowerCase();
+            let badgeClass = eventoLower.includes('pericolo') ? 'badge-danger' : 'badge-warning';
+            const badgeLabel = `<span class="badge ${badgeClass} badge-evento">${ev.evento}</span>`;
+            table.row.add([ev.data_ora, badgeLabel]);
+          });
+          table.draw();
+        });
+    }
+
+    function filtraPerTipo(tipo) {
+      fetch('/get_allarmi_storico')
+        .then(res => res.json())
+        .then(data => {
+          const table = $('#storicoTable').DataTable();
+          const filtrati = data.filter(ev => ev.evento.toLowerCase().includes(tipo));
+          table.clear();
+          filtrati.forEach(ev => {
+            const badgeClass = ev.evento.toLowerCase().includes('pericolo') ? 'badge-danger' : 'badge-warning';
+            const badgeLabel = `<span class="badge ${badgeClass} badge-evento">${ev.evento}</span>`;
+            table.row.add([ev.data_ora, badgeLabel]);
+          });
+          table.draw();
+          document.getElementById('totale-eventi').textContent = `Totale eventi registrati: ${filtrati.length}`;
+        });
+    }
+
+function esportaSettimanaCSV(data, startDate) {
+  const giorni = [...Array(7)].map((_, i) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+  });
+
+  const conteggio = {};
+  giorni.forEach(g => {
+    conteggio[g] = { attenzione: 0, pericolo: 0 };
+  });
+
+  data.forEach(ev => {
+    const d = new Date(ev.data_ora);
+    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    if (conteggio[giorno]) {
+      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
+      conteggio[giorno][tipo]++;
+    }
+  });
+
+  let csv = 'Data,Allarmi,Pericoli\n';
+  giorni.forEach(g => {
+    csv += `${g},${conteggio[g].attenzione},${conteggio[g].pericolo}\n`;
+  });
+
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `settimana_${giorni[0]}_to_${giorni[6]}.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function esportaSettimanaExcel(data, startDate) {
+  const giorni = [...Array(7)].map((_, i) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+  });
+
+  const conteggio = {};
+  giorni.forEach(g => {
+    conteggio[g] = { attenzione: 0, pericolo: 0 };
+  });
+
+  data.forEach(ev => {
+    const d = new Date(ev.data_ora);
+    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    if (conteggio[giorno]) {
+      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
+      conteggio[giorno][tipo]++;
+    }
+  });
+
+  let rows = [['Data', 'Allarmi', 'Pericoli']];
+  giorni.forEach(g => {
+    rows.push([g, conteggio[g].attenzione, conteggio[g].pericolo]);
+  });
+
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  XLSX.utils.book_append_sheet(wb, ws, 'Settimana');
+  XLSX.writeFile(wb, `settimana_${giorni[0]}_to_${giorni[6]}.xlsx`);
+}
+
+function esportaSettimanaPDF(data, startDate) {
+  const giorni = [...Array(7)].map((_, i) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+  });
+
+  const conteggio = {};
+  giorni.forEach(g => {
+    conteggio[g] = { attenzione: 0, pericolo: 0 };
+  });
+
+  data.forEach(ev => {
+    const d = new Date(ev.data_ora);
+    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    if (conteggio[giorno]) {
+      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
+      conteggio[giorno][tipo]++;
+    }
+  });
+
+  const body = [['Data', 'Allarmi', 'Pericoli']];
+  giorni.forEach(g => {
+    body.push([g, conteggio[g].attenzione, conteggio[g].pericolo]);
+  });
+
+  const docDefinition = {
+    content: [
+      { text: 'Report Settimanale Allarmi e Pericoli', style: 'header' },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['*', '*', '*'],
+          body: body
+        }
+      }
+    ],
+    styles: {
+      header: {
+        fontSize: 16,
+        bold: true,
+        margin: [0, 0, 0, 10]
+      }
+    }
+  };
+
+  pdfMake.createPdf(docDefinition).download(`settimana_${giorni[0]}_to_${giorni[6]}.pdf`);
+}
+
+function stampaSettimana(data, startDate) {
+  const giorni = [...Array(7)].map((_, i) => {
+    const d = new Date(startDate);
+    d.setDate(d.getDate() + i);
+    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+  });
+
+  const conteggio = {};
+  giorni.forEach(g => {
+    conteggio[g] = { attenzione: 0, pericolo: 0 };
+  });
+
+  data.forEach(ev => {
+    const d = new Date(ev.data_ora);
+    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
+    if (conteggio[giorno]) {
+      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
+      conteggio[giorno][tipo]++;
+    }
+  });
+
+  let stampa = '<h3>Report Settimanale</h3>';
+  stampa += '<table border="1" cellspacing="0" cellpadding="4"><tr><th>Data</th><th>Allarmi</th><th>Pericoli</th></tr>';
+  giorni.forEach(g => {
+    stampa += `<tr><td>${g}</td><td>${conteggio[g].attenzione}</td><td>${conteggio[g].pericolo}</td></tr>`;
+  });
+  stampa += '</table>';
+
+  const win = window.open('', '', 'width=800,height=600');
+  win.document.write(`<!DOCTYPE html><html><head><title>Stampa Report</title></head><body>${stampa}</body></html>`);
+  win.document.close();
+  win.print();
+}
+
+
+    $(document).ready(function () {
+      $('#storicoTable').DataTable({
+        dom: '<"top-buttons"B><"top-controls"lf>rtip',
+        buttons: [
+          { extend: 'csv', text: '📥 Esporta CSV', className: 'btn btn-outline-primary btn-sm' },
+          { extend: 'excel', text: '📊 Esporta Excel', className: 'btn btn-outline-success btn-sm' },
+          { extend: 'pdf', text: '📄 Esporta PDF', className: 'btn btn-outline-danger btn-sm' },
+          { extend: 'print', text: '🖨️ Stampa', className: 'btn btn-outline-secondary btn-sm' }
+        ]
+      });
+
+      caricaStorico();
+      setInterval(caricaStorico, 30000);
+
+
+      let dataSelezionata = null;
+
+      flatpickr("#datepicker", {
+  altInput: true,
+  altFormat: "D, M j Y", // più compatto
+  dateFormat: "Y-m-d",
+  altInputClass: "form-control form-control-sm custom-datepicker",
+  onChange: function (selectedDates) {
+    if (selectedDates.length > 0) {
+      dataSelezionata = selectedDates[0];
+      caricaGraficoDaData(dataSelezionata);
+    }
+  }
+});
+document.querySelectorAll(".dropdown-export-option").forEach(btn => {
+  btn.addEventListener("click", function () {
+    const formato = this.getAttribute("data-format");
+    if (!dataSelezionata) {
+      alert("Seleziona una data prima di esportare.");
+      return;
+    }
+
+    const start = new Date(dataSelezionata);
+    const end = new Date(start);
+    end.setDate(start.getDate() + 6);
+
+    fetch('/get_allarmi_storico')
+      .then(res => res.json())
+      .then(data => {
+        const filtrati = data.filter(ev => {
+          const d = new Date(ev.data_ora);
+          return d >= start && d <= end;
+        });
+
+        if (formato === 'csv') {
+  esportaSettimanaCSV(filtrati, start);
+} else if (formato === 'excel') {
+  esportaSettimanaExcel(filtrati, start);
+} else if (formato === 'pdf') {
+  esportaSettimanaPDF(filtrati, start);
+} else if (formato === 'print') {
+  stampaSettimana(filtrati, start);
+}
+      });
+  });
+});
+    });
+  </script>
+</body>
+</html>
