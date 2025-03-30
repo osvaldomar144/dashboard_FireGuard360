@@ -55,17 +55,26 @@ def index():
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
-    # Connessione al database per recuperare tutti i dati Arduino
     conn = get_db_connection()
     cur = conn.cursor()
 
-    cur.execute('SELECT * FROM dati_arduino ORDER BY data_ora DESC;')  # Ordina per data_ora decrescente
-    dati = cur.fetchall()
+    cur.execute('SELECT temperatura, umidita, fumo FROM dati_arduino ORDER BY data_ora DESC LIMIT 1')
+    row = cur.fetchone()
 
     cur.close()
     conn.close()
 
-    return render_template('index.html', username=session.get('username'))
+    temperatura = row[0] if row else "N/A"
+    umidita = row[1] if row else "N/A"
+    fumo = row[2] if row else "N/A"
+
+    return render_template(
+        'index.html',
+        username=session.get('username'),
+        temperatura=temperatura,
+        umidita=umidita,
+        fumo=fumo
+    )
 
 @app.route('/get_data')
 def get_data():
@@ -87,6 +96,63 @@ def get_data():
     } for row in dati]
 
     return jsonify(data)
+
+@app.route('/get_last_events')
+def get_last_events():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute('SELECT data_ora, evento FROM eventi ORDER BY data_ora DESC LIMIT 5')
+    rows = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    eventi = [{"data_ora": row[0].strftime("%Y-%m-%d %H:%M:%S"), "evento": row[1]} for row in rows]
+    return jsonify(eventi)
+
+@app.route('/get_stats')
+def get_stats():
+    range_option = request.args.get('range', 'tutto')
+    
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Filtro per tabella dati_arduino
+    if range_option == 'oggi':
+        filtro_arduino = "WHERE DATE(data_ora) = CURDATE()"
+        filtro_eventi = "AND DATE(data_ora) = CURDATE()"
+    elif range_option == '7':
+        filtro_arduino = "WHERE data_ora >= NOW() - INTERVAL 7 DAY"
+        filtro_eventi = "AND data_ora >= NOW() - INTERVAL 7 DAY"
+    elif range_option == '30':
+        filtro_arduino = "WHERE data_ora >= NOW() - INTERVAL 30 DAY"
+        filtro_eventi = "AND data_ora >= NOW() - INTERVAL 30 DAY"
+    else:
+        filtro_arduino = ""
+        filtro_eventi = ""
+
+    # Media dei valori dal sensore
+    cur.execute(f"SELECT AVG(temperatura), AVG(umidita), AVG(fumo) FROM dati_arduino {filtro_arduino}")
+    media = cur.fetchone()
+
+    # Numero di eventi critici o allarmi
+    cur.execute(f"""
+        SELECT COUNT(*) FROM eventi
+        WHERE (evento LIKE '%allarme%' OR evento LIKE '%pericolo%')
+        AND data_ora IS NOT NULL {filtro_eventi}
+    """)
+    allarmi = cur.fetchone()[0]
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "media_temperatura": round(media[0], 1) if media[0] else 0,
+        "media_umidita": round(media[1], 1) if media[1] else 0,
+        "media_fumo": round(media[2], 1) if media[2] else 0,
+        "numero_allarmi": allarmi
+    })
 
 @app.route('/get_data_filter', methods=['GET'])
 def get_filtered_data():
@@ -121,6 +187,7 @@ def get_filtered_data():
     } for row in data]
 
     return jsonify(result)
+
 
 
 @app.route('/dati-arduino')

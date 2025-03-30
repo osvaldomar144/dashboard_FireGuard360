@@ -3,384 +3,605 @@
 
 <head>
   <meta charset="utf-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-  <meta name="description" content="">
-  <meta name="author" content="">
-
   <title>Dashboard FireGuard360</title>
 
-  <!-- Bootstrap e CSS -->
+  <!-- CSS -->
   <link href="{{ url_for('static', filename='css/sb-admin-2.min.css') }}" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-  <!-- Aggiungi il CSS per il Date Range Picker -->
-  <link href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap4.min.css">
 
   <style>
-    #content-wrapper {
+    .card-body .status-indicator {
+      font-size: 1.1rem;
+      font-weight: bold;
+    }
+    .log-table td, .log-table th {
+      font-size: 0.9rem;
+    }
+    .dt-buttons .btn {
+  background-color: white;
+  color: inherit;
+  transition: all 0.2s ease-in-out;
+  margin-right: 8px;
+}
+
+.btn-outline-primary:hover {
+  background-color: #0d6efd;
+  color: white;
+  border-color: #0d6efd;
+}
+.btn-outline-success:hover {
+  background-color: #198754;
+  color: white;
+  border-color: #198754;
+}
+.btn-outline-danger:hover {
+  background-color: #dc3545;
+  color: white;
+  border-color: #dc3545;
+}
+.btn-outline-secondary:hover {
+  background-color: #e2e6ea;
+  color: #212529;
+  border-color: #adb5bd;
+}
+    div.dataTables_wrapper div.dataTables_filter {
+      float: right;
+    }
+    div.dataTables_wrapper div.dataTables_length {
+      float: left;
+    }
+    div.top-controls {
       display: flex;
-      flex-direction: column;
-      justify-content: flex-start;
-      padding-bottom: 30px;  /* Aggiungi uno spazio tra il contenuto e il fondo */
-    }
-
-    .chart-card {
-      height: 200px;  /* Impostare l'altezza a 150px o un valore più piccolo */
-      width: 90%;     /* Impostare la larghezza al 80% del contenitore */
-      margin: 0 auto; /* Centra i grafici orizzontalmente */
-      margin-bottom: 10px;  /* Spazio tra i grafici */
-    }
-
-    #content-wrapper .row .col-xl-3:first-child {
-      margin-left: 40px; /* Modifica il valore per ottenere più o meno spazio */
-    }
-
-    #controlli .col-md-5:first-child {
-      margin-left: 40px;
-    }
-
-    #temperatura-chart, #fumo-chart, #umidita-chart {
-      margin-left: 10px; 
-    }
-
-    #filter-button-container {
-      display: flex;
+      justify-content: space-between;
       align-items: center;
-      justify-content: flex-start;
-      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+    div.top-buttons {
+      margin-bottom: 10px;
     }
 
-    button {
-      font-size: 14px;
-      padding: 8px 15px;
-    }
-
-
-     /* Aumenta la larghezza degli input */
-#start-date, #end-date {
-  width: 200px; /* Puoi modificare il valore per aumentare la larghezza */
-  height: 42px;
+    .card-allerta-danger {
+  background-color: #f8d7da !important; /* rosso chiaro */
+  border-left: 0.4rem solid #dc3545 !important;
 }
 
-/* Aggiungi uno stile per il contenitore del filtro per allineare meglio gli elementi */
-.filter-container {
-  display: flex;
-  justify-content: flex-start; /* Allinea gli input e il pulsante a sinistra */
-  align-items: center; 
- 
-  margin-top: 20px; /* Distanza tra il filtro e i grafici */
+.card-allerta-warning {
+  background-color: #fff3cd !important; /* giallo chiaro */
+  border-left: 0.4rem solid #ffc107 !important;
 }
 
-/* Imposta la larghezza dell'input data */
-.filter-container .form-control {
-  width: 150px; /* Imposta la larghezza dell'input data */
+.icon-chiara {
+  color: #dee2e6 !important; /* grigio chiaro di default */
 }
 
-.filter-container label {
+.icon-warning {
+  color: #856404 !important; /* marrone dorato su sfondo giallo */
+}
+
+.icon-danger {
+  color: #842029 !important; /* rosso scuro su sfondo rosso chiaro */
+}
+.titolo-normale {
+  color: #6c757d !important; /* Grigio neutro */
+}
+
+.titolo-warning {
+  color: #ffc107 !important; /* Giallo */
+}
+
+.titolo-danger {
+  color: #dc3545 !important; /* Rosso */
+}
+
+.mini-stat-card {
+  border-radius: 0.5rem;
+  transition: transform 0.2s ease;
+}
+.mini-stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.1);
+}
+
+.mini-stat-card .card-body {
+  padding: 10px 8px;
+}
+
+.mini-stat-card .mb-1 {
+  font-size: 1.1rem; /* icona */
+  margin-bottom: 4px;
+}
+
+.mini-stat-card h6 {
+  font-size: 0.9rem;
+  margin-bottom: 2px;
+}
+
+.mini-stat-card p {
+  font-size: 0.95rem;
+  margin: 0;
+}
+.info-icon {
+  font-size: 0.85rem;
+  color: rgba(108, 117, 125, 0.5);
+  margin-left: 6px;
+  cursor: pointer;
+}
+
+.info-icon:hover {
+  color: rgba(108, 117, 125, 0.9); /* più visibile al passaggio del mouse */
+}
+.card:hover {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  transform: translateY(-2px);
+  transition: all 0.3s ease;
+}
+.text-temp {
+  color: #007bff; /* Azzurro profondo */
+}
+
+.card-ios {
+  background-color: #fefefe;
+  border-radius: 20px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease-in-out;
+  border: none;
+  height: 100%;
+}
+
+.card-ios:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+}
+
+.card-ios .card-body {
+  padding: 1.2rem;
+  min-height: 100px; /* altezza uniforme */
+}
+
+.card-ios .emoji {
+  font-size: 1.6rem;
+  margin-bottom: 0.4rem;
+  line-height: 1;
+}
+
+.card-ios h6 {
+  font-weight: 600;
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+  line-height: 1.1;
+}
+
+.card-ios p {
+  font-size: 1.2rem;
   font-weight: bold;
-  margin-left: 40px;
-
+  color: #343a40;
+  margin: 0;
 }
 
-/* Allinea il pulsante al contenuto */
-.filter-container .btn {
-  padding: 10px 20px;
-  font-size: 14px;
-  margin-bottom: -20px;
+.ambiente-badge {
+  font-size: 1.2rem;
+  font-weight: 600;
+  border-radius: 1rem;
+  border: 1px solid transparent;
 }
 
-/* Modifica layout dei container per avere una disposizione orizzontale */
-.col-md-4 {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-.col-md-4-fine{
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
+.ambiente-ok {
+  background-color: #d4edda; /* Verde chiaro */
+  color: #155724;            /* Verde scuro testo */
+  border-color: #c3e6cb;
 }
 
-.col-md-4 label {
-  margin-bottom: 5px;
-}
-.col-md-4-fine label{
-  margin-left: -150px;
-}
-.col-md-4-fine input {
-  margin-bottom: 13px;
+.ambiente-warning {
+  background-color: #fff3cd; /* Giallo chiaro */
+  color: #856404;            /* Marrone/giallo scuro */
+  border-color: #ffeeba;
 }
 
-.col-md-4 input {
-  margin-bottom: 10px;
+.ambiente-danger {
+  background-color: #f8d7da; /* Rosso chiaro */
+  color: #721c24;            /* Rosso scuro testo */
+  border-color: #f5c6cb;
 }
-
-#start-date{
-    margin-left: 40px; /* Puoi modificare il valore per aumentare la larghezza */
-  }
-
-  #end-date{
-    margin-left: -150px; /* Puoi modificare il valore per aumentare la larghezza */
-  }
 
 
   </style>
 </head>
 
 <body id="page-top">
-
   <div id="wrapper">
-
     {% include 'sidebar.html' %}
 
     <div id="content-wrapper" class="d-flex flex-column">
-
       <div id="content">
-
         {% include 'topbar.html' %}
 
-        <!-- Card Section -->
-        <div class="row">
-          <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-primary shadow h-100 py-2">
-              <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                  <div class="col mr-2">
-                    <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Temperatura Attuale</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="temperatura">Caricamento...</div>
+        <!-- Header -->
+        <div class="container-fluid">
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 text-gray-800 mb-0">Dashboard</h1>
+            <button onclick="aggiornaTutto()" class="btn btn-outline-secondary btn-sm shadow-sm">
+              <i class="fas fa-sync-alt mr-1"></i> Aggiorna
+            </button>
+          </div>
+
+          <!-- Sezione: Stato Ambiente -->
+          <div class="row mb-4">
+            <div class="col-xl-12">
+              <div class="card shadow h-100 py-2">
+                <div class="card-body">
+                  <h6 class="text-muted font-weight-bold mb-2">Stato Ambiente:</h6>
+                  <span id="badge-stato-ambiente" class="badge badge-pill px-4 py-2 shadow-sm ambiente-badge">
+                    🟢 Ambiente stabile
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Sezione: Valori Attuali -->
+          <!-- Sezione: Valori Attuali -->
+          <div class="row">
+            <!-- Temperatura -->
+            <div class="col-xl-4 col-md-6 mb-4">
+              <div id="card-temperatura" class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-primary text-uppercase mb-1" id="titolo-temperatura">
+                        Temperatura Attuale
+                      </div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800" id="temperatura">Caricamento...</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
+                    </div>
                   </div>
-                  <div class="col-auto">
-                    <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
+                </div>
+              </div>
+            </div>
+
+            <!-- Umidità -->
+            <div class="col-xl-4 col-md-6 mb-4">
+              <div id="card-umidita" class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-success text-uppercase mb-1" id="titolo-umidita">
+                        Umidità Attuale
+                      </div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800" id="umidita">Caricamento...</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-tint fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Fumo -->
+            <div class="col-xl-4 col-md-6 mb-4">
+              <div id="card-fumo" class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                  <div class="row no-gutters align-items-center">
+                    <div class="col mr-2">
+                      <div class="text-xs font-weight-bold text-info text-uppercase mb-1" id="titolo-fumo">
+                        Fumo Attuale
+                      </div>
+                      <div class="h5 mb-0 font-weight-bold text-gray-800" id="fumo">Caricamento...</div>
+                    </div>
+                    <div class="col-auto">
+                      <i class="fas fa-smoking fa-2x text-gray-300"></i>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+
+            
+          </div>
+
+          <!-- Sezione: Ultimi Eventi -->
+          <div class="row">
+            <div class="col-xl-12">
+              <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                  <h6 class="m-0 font-weight-bold text-primary">Ultimi Eventi</h6>
+                </div>
+                <div class="card-body">
+                  <div class="table-responsive">
+                    <table id="eventiTable" class="table table-bordered log-table" width="100%">
+                      <thead>
+                        <tr>
+                          <th>Data/Ora</th>
+                          <th>Evento</th>
+                        </tr>
+                      </thead>
+                      <tbody id="eventi-log">
+                        <!-- Popolato dinamicamente -->
+                      </tbody>
+                    </table>
                   </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-success shadow h-100 py-2">
-              <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                  <div class="col mr-2">
-                    <div class="text-xs font-weight-bold text-success text-uppercase mb-1">Umidità Attuale</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="umidita">Caricamento...</div>
-                  </div>
-                  <div class="col-auto">
-                    <i class="fas fa-tint fa-2x text-gray-300"></i>
-                  </div>
+          <!-- Sezione Riepilogo -->
+
+          
+          <!-- Sezione Riepilogo Statistiche Compatte -->
+          <div class="d-flex align-items-center justify-content-between mb-2 mt-4">
+            <div class="d-flex align-items-center">
+              <h5 class="mb-0 font-weight-bold">📊 Statistiche Medie</h5>
+              <i class="fas fa-info-circle info-icon ml-2" data-toggle="tooltip" title="Media dei valori raccolti nel periodo selezionato."></i>
+            </div>
+          
+            <div>
+              <select id="range-select" class="form-control form-control-sm">
+                <option value="oggi">Oggi</option>
+                <option value="7">Ultimi 7 giorni</option>
+                <option value="30">Ultimi 30 giorni</option>
+                <option value="tutto">Tutti i dati</option>
+              </select>
+            </div>
+          </div>
+            <button onclick="aggiornaStats()" class="btn btn-sm btn-outline-secondary ml-auto">
+              <i class="fas fa-sync-alt mr-1"></i> Aggiorna
+            </button>
+          </div>
+
+          <div class="row mt-4 mb-3 justify-content-center">
+            <!-- Card Temperatura -->
+            <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
+              <div class="card card-ios text-center h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                  <div class="emoji">🌡️</div>
+                  <h6 class="text-temp">Media Temperatura</h6>
+                  <p id="media-temperatura">-- °C</p>
+                </div>
+              </div>
+            </div>
+          
+            <!-- Card Umidità -->
+            <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
+              <div class="card card-ios text-center h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                  <div class="emoji">💧</div>
+                  <h6 class="text-temp">Media Umidità</h6>
+                  <p id="media-umidita">-- %</p>
+                </div>
+              </div>
+            </div>
+          
+            <!-- Card Fumo -->
+            <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
+              <div class="card card-ios text-center h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                  <div class="emoji">🚬</div>
+                  <h6 class="text-temp">Media Fumo</h6>
+                  <p id="media-fumo">-- ppm</p>
                 </div>
               </div>
             </div>
           </div>
+          </div>
 
-          <div class="col-xl-3 col-md-6 mb-4">
-            <div class="card border-left-info shadow h-100 py-2">
-              <div class="card-body">
-                <div class="row no-gutters align-items-center">
-                  <div class="col mr-2">
-                    <div class="text-xs font-weight-bold text-info text-uppercase mb-1">Fumo Attuale</div>
-                    <div class="h5 mb-0 font-weight-bold text-gray-800" id="fumo">Caricamento...</div>
-                  </div>
-                  <div class="col-auto">
-                    <i class="fas fa-smoking fa-2x text-gray-300"></i>
-                  </div>
-                </div>
-              </div>
-            </div>
+          
           </div>
-        </div>
+        </div> <!-- fine container-fluid -->
+      </div> <!-- fine content -->
+    </div> <!-- fine content-wrapper -->
+  </div> <!-- fine wrapper -->
 
-        <!-- Controlli -->
-        <div id="controlli" class="row">
-          <div class="col-md-5">
-            <div class="card shadow mb-4">
-              <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Controllo Finestra</h6>
-              </div>
-              <div class="card-body text-center">
-                <button class="btn btn-success" id="finestra-btn">Apri Finestra</button>
-                <button class="btn btn-outline-secondary mt-2 d-none" id="undo-finestra-btn">Annulla Azione</button>
-              </div>
-            </div>
-          </div>
-        </div>
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.7/dist/umd/popper.min.js"></script>
 
-        <!-- Filtro per il range di date con Bootstrap Date Range Picker -->
-        <div class="row mt-4 filter-container">
-          <div class="col-md-4">
-            <label for="start-date">Data Inizio</label>
-            <input type="date" id="start-date" class="form-control">
-          </div>
-          <div class="col-md-4-fine ">
-            <label for="end-date">Data Fine</label>
-            <input type="date" id="end-date" class="form-control">
-          </div>
-          <div class="col-md-4">
-            <button class="btn btn-primary" onclick="filterData()">Filtra Dati</button>
-          </div>
-        </div>
+<!-- Bootstrap JS -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.bundle.min.js"></script>
 
-        <div class="row mt-4">
-          <!-- Grafico della Temperatura -->
-          <div class="col-lg-6 mb-4">
-            <canvas id="temperatura-chart" class="chart-card"></canvas>
-          </div>
-          <!-- Grafico dell'Umidità -->
-          <div class="col-lg-6 mb-4">
-            <canvas id="umidita-chart" class="chart-card"></canvas>
-          </div>
-        </div>
-        <div class="row mt-4">
-          <!-- Grafico del Fumo -->
-          <div class="col-lg-6 mb-4">
-            <canvas id="fumo-chart" class="chart-card"></canvas>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Modal per il logout -->
-  <div class="modal fade" id="logoutModal" tabindex="-1" role="dialog" aria-labelledby="logoutModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="logoutModalLabel">Sei sicuro di voler uscire?</h5>
-          <button class="close" type="button" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">×</span>
-          </button>
-        </div>
-        <div class="modal-body">Clicca su "Logout" per uscire.</div>
-        <div class="modal-footer">
-          <button class="btn btn-secondary" type="button" data-dismiss="modal">Annulla</button>
-          <a class="btn btn-primary" href="{{ url_for('logout') }}">Logout</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/bootstrap.bundle.min.js') }}"></script>
-  <script src="{{ url_for('static', filename='js/sb-admin-2.min.js') }}"></script>
-  <script src="https://cdn.jsdelivr.net/npm/moment/moment.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
   <script>
-    function showToast(message) {
-      const toastMessage = document.getElementById('toast-message');
-      toastMessage.textContent = message;
-      const toast = new bootstrap.Toast(document.getElementById('action-toast'));
-      toast.show();
-    }
+    let eventiTable = null;
 
-    function createChart(chartId, labels, data, label, color, chartType) {
-  // Distruggi il grafico esistente (se presente)
-  const existingChart = Chart.getChart(chartId); // Recupera il grafico esistente
-  if (existingChart) {
-    existingChart.destroy(); // Distruggi il grafico esistente
-  }
-
-  // Crea un nuovo grafico
-  new Chart(document.getElementById(chartId), {
-    type: chartType,
-    data: {
-      labels: labels,
-      datasets: [{
-        label: label,
-        data: data,
-        backgroundColor: color,
-        borderColor: color,
-        borderWidth: 1,
-        fill: false,
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: true,
-      animation: {
-        duration: 1000,
-        easing: 'easeInOutCubic',
-      },
-      scales: {
-        x: {
-          title: {
-            display: true,
-            text: 'Data/Ora'
-          },
-          ticks: {
-            display: false
-          }
-        },
-        y: {
-          beginAtZero: true,
-          title: {
-            display: true,
-            text: label
-          }
-        }
-      }
-    }
-  });
-}
-
-function filterData() {
-  const startDate = document.getElementById('start-date').value;
-  const endDate = document.getElementById('end-date').value;
-
-  if (!startDate || !endDate) {
-    alert('Per favore, seleziona un intervallo di date valido.');
-    return;
-  }
-
-  // Aggiungi l'ora per le date
-  const startDateTime = `${startDate} 00:00:00`;  // Inizio del giorno
-  const endDateTime = `${endDate} 23:59:59`;  // Fine del giorno
-
-  // Codifica correttamente i parametri della query
-  const startDateEncoded = encodeURIComponent(startDateTime);
-  const endDateEncoded = encodeURIComponent(endDateTime);
-
-  // Fai una richiesta AJAX al backend per ottenere i dati filtrati
-  fetch(`/get_data_filter?start_date=${startDateEncoded}&end_date=${endDateEncoded}`)
-    .then(response => response.json())
+function aggiornaEventi() {
+  fetch('/get_last_events')
+    .then(res => res.json())
     .then(data => {
-      updateCharts(data);
-    })
-    .catch(error => console.error('Errore nel recupero dei dati:', error));
+      if (eventiTable) {
+        eventiTable.clear().draw();
+        data.forEach(ev => {
+          eventiTable.row.add([
+            ev.data_ora,
+            ev.evento
+          ]);
+        });
+        eventiTable.draw();
+      } else {
+        const tbody = document.getElementById('eventi-log');
+        tbody.innerHTML = '';
+        data.forEach(ev => {
+          const row = document.createElement('tr');
+          row.innerHTML = `<td>${ev.data_ora}</td><td>${ev.evento}</td>`;
+          tbody.appendChild(row);
+        });
+
+        eventiTable = $('#eventiTable').DataTable({
+          dom: '<"top-buttons"B><"top-controls"lf>rtip',
+          buttons: [
+            {
+              extend: 'csv',
+              text: '📥 Esporta CSV',
+              className: 'btn btn-outline-primary btn-sm'
+            },
+            {
+              extend: 'excel',
+              text: '📊 Esporta Excel',
+              className: 'btn btn-outline-success btn-sm'
+            },
+            {
+              extend: 'pdf',
+              text: '📄 Esporta PDF',
+              className: 'btn btn-outline-danger btn-sm'
+            },
+            {
+              extend: 'print',
+              text: '🖨️ Stampa',
+              className: 'btn btn-outline-secondary btn-sm'
+            }
+          ]
+        });
+      }
+    });
+}
+    function aggiornaDatiSensori() {
+  fetch('/get_data')
+    .then(res => res.json())
+    .then(data => {
+      const d = data[0];
+
+      document.getElementById('temperatura').textContent = `${d.temperatura} °C`;
+      document.getElementById('umidita').textContent = `${d.umidita} %`;
+      document.getElementById('fumo').textContent = `${d.fumo} ppm`;
+
+      const badge = document.getElementById('badge-stato-ambiente');
+    badge.classList.remove('ambiente-ok', 'ambiente-warning', 'ambiente-danger');
+
+if (d.temperatura >= 35 || d.fumo >= 1) {
+  badge.textContent = '🔴 Pericolo: valori critici!';
+  badge.classList.add('ambiente-danger');
+} else if (d.temperatura >= 30 || d.fumo >= 0.5) {
+  badge.textContent = '🟡 Attenzione: valori elevati';
+  badge.classList.add('ambiente-warning');
+} else {
+  badge.textContent = '🟢 Ambiente stabile';
+  badge.classList.add('ambiente-ok');
 }
 
-    function updateCharts(data) {
-      const dataLabels = data.map(item => item.data_ora);
-      const temperaturaData = data.map(item => item.temperatura);
-      const umiditaData = data.map(item => item.umidita);
-      const fumoData = data.map(item => item.fumo);
+      // Card Temperatura
+     
+const titoloTemp = document.getElementById('titolo-temperatura');
+titoloTemp.classList.remove('titolo-normale', 'titolo-warning', 'titolo-danger');
+const cardTemp = document.getElementById('card-temperatura');
+const iconTemp = cardTemp.querySelector('i');
+iconTemp.classList.remove('icon-chiara', 'icon-warning', 'icon-danger');
+// Card Fumo
+const cardFumo = document.getElementById('card-fumo');
+cardFumo.classList.remove(
+  'card-allerta-danger', 'card-allerta-warning',
+  'border-left-info'
+);
+const iconFumo = cardFumo.querySelector('i');
+iconFumo.classList.remove('icon-chiara', 'icon-warning', 'icon-danger');
 
-      createChart('temperatura-chart', dataLabels, temperaturaData, 'Temperatura (°C)', 'rgb(255, 99, 132)', 'line');
-      createChart('umidita-chart', dataLabels, umiditaData, 'Umidità (%)', 'rgb(54, 162, 235)', 'line');
-      createChart('fumo-chart', dataLabels, fumoData, 'Fumo (ppm)', 'rgb(75, 192, 192)', 'bar');
-    }
+cardTemp.classList.remove(
+  'card-allerta-danger', 'card-allerta-warning',
+  'border-left-primary'
+);
+const titoloFumo = document.getElementById('titolo-fumo');
+titoloFumo.classList.remove('titolo-normale', 'titolo-warning', 'titolo-danger');
 
-    window.onload = function() {
-      fetch('/get_data')
-        .then(response => response.json())
-        .then(data => {
-          const dataLabels = data.map(item => item.data_ora);
-          const temperaturaData = data.map(item => item.temperatura);
-          const umiditaData = data.map(item => item.umidita);
-          const fumoData = data.map(item => item.fumo);
+if (d.temperatura >= 35) {
+  cardTemp.classList.add('card-allerta-danger');
+  iconTemp.classList.add('icon-danger');
+  titoloTemp.classList.add('titolo-danger');
+} else if (d.temperatura >= 30) {
+  cardTemp.classList.add('card-allerta-warning');
+  iconTemp.classList.add('icon-warning');
+  titoloTemp.classList.add('titolo-warning');
+} else {
+  cardTemp.classList.add('border-left-primary');
+  iconTemp.classList.add('icon-chiara');
+  titoloTemp.classList.add('titolo-normale');
+}
 
-          createChart('temperatura-chart', dataLabels, temperaturaData, 'Temperatura (°C)', 'rgb(255, 99, 132)', 'line');
-          createChart('umidita-chart', dataLabels, umiditaData, 'Umidità (%)', 'rgb(54, 162, 235)', 'line');
-          createChart('fumo-chart', dataLabels, fumoData, 'Fumo (ppm)', 'rgb(75, 192, 192)', 'bar');
 
-          document.getElementById('temperatura').textContent = `${temperaturaData[0]} °C`;
-          document.getElementById('umidita').textContent = `${umiditaData[0]} %`;
-          document.getElementById('fumo').textContent = `${fumoData[0]} ppm`;
-        })
-        .catch(error => console.error('Error fetching data:', error));
-    }
+if (d.fumo >= 1) {
+  cardFumo.classList.add('card-allerta-danger');
+  iconFumo.classList.add('icon-danger');
+  titoloFumo.classList.add('titolo-danger');
+} else if (d.fumo >= 0.5) {
+  cardFumo.classList.add('card-allerta-warning');
+  iconFumo.classList.add('icon-warning');
+  titoloFumo.classList.add('titolo-warning');
+} else {
+  cardFumo.classList.add('border-left-info');
+  iconFumo.classList.add('icon-chiara');
+  titoloFumo.classList.add('titolo-normale');
+}
+
+      // Card Umidità (rimane base verde)
+      const cardUmidita = document.getElementById('card-umidita');
+      cardUmidita.classList.remove('border-left-success');
+      cardUmidita.classList.add('border-left-success');
+    });
+}
+
+
+
+$(function () {
+    $('[data-toggle="tooltip"]').tooltip();
+  });
+
+  // Funzione per aggiornare le medie
+  function aggiornaStats() {
+  const range = document.getElementById('range-select').value;
+
+  fetch(`/get_stats?range=${range}`)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById('media-temperatura').textContent = `${data.media_temperatura} °C`;
+      document.getElementById('media-umidita').textContent = `${data.media_umidita} %`;
+      document.getElementById('media-fumo').textContent = `${data.media_fumo} ppm`;
+    });
+}
+
+function aggiornaTutto() {
+  aggiornaDatiSensori();
+  aggiornaEventi();
+  aggiornaStats();
+}
+
+// Se cambia il range, aggiorna
+document.getElementById('range-select').addEventListener('change', aggiornaStats);
+
+
+window.onload = function () {
+  aggiornaEventi();
+  aggiornaDatiSensori();
+  aggiornaStats();
+
+  setInterval(() => {
+    aggiornaDatiSensori();
+    aggiornaEventi();
+    aggiornaStats();
+  }, 30000);
+};
   </script>
 </body>
-
 </html>
+
+
+
+<!-- 
+╔══════════════════════════════╦═════════════════════════════════════╦═══════════════╗
+║       Condizione            ║          Stato Ambiente             ║     Classe    ║
+╠══════════════════════════════╬═════════════════════════════════════╬═══════════════╣
+║ T < 30°C e Fumo < 50         ║ 🟢 Ambiente stabile                 ║ text-success  ║
+║ 30°C ≤ T < 35 oppure Fumo ≥ 50║ 🟡 Attenzione: valori elevati      ║ text-warning  ║
+║ T ≥ 35°C oppure Fumo ≥ 100   ║ 🔴 Pericolo: valori critici!        ║ text-danger   ║
+╚══════════════════════════════╩═════════════════════════════════════╩═══════════════╝
+-->
