@@ -25,11 +25,13 @@
       </a>
     </li>
     
-    <li class="nav-item">
-      <a class="nav-link" href="{{ url_for('index') }}#controlli">
+    <li class="nav-item {% if request.endpoint == 'controlli' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('controlli') }}">
         <i class="fas fa-fw fa-tools"></i>
-        <span>Controllo</span></a>
+        <span>Controlli</span>
+      </a>
     </li>
+    
     <li class="nav-item">
       <a class="nav-link" href="{{ url_for('allarmi') }}">
         <i class="fas fa-fw fa-bell"></i>

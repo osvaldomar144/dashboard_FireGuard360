@@ -213,6 +213,7 @@ div.top-controls .dataTables_filter {
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
 <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
 
+
   <script>
     let temperaturaChart;
     let umiditaChart;
@@ -251,65 +252,119 @@ div.top-controls .dataTables_filter {
       const temperatura = JSON.parse('{{ chart_temperatura | tojson | safe }}');
       const fumo = JSON.parse('{{ chart_fumo | tojson | safe }}');
       const umidita = JSON.parse('{{ chart_umidita | tojson | safe }}');
-  
+      const fullDates = JSON.parse('{{ full_dates | tojson | safe }}'); 
+
+
       temperaturaChart = new Chart(document.getElementById('chartTemperatura'), {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Temperatura',
-            data: temperatura,
-            backgroundColor: 'rgba(255, 99, 132, 0.2)',
-            borderColor: 'rgba(255, 99, 132, 1)',
-            borderWidth: 2,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true } }
+    type: 'line',
+    data: {
+      labels: labels,  // Le etichette (solo ora e minuti)
+      datasets: [{
+        label: 'Temperatura',
+        data: temperatura,
+        backgroundColor: 'rgba(255, 99, 132, 0.2)',
+        borderColor: 'rgba(255, 99, 132, 1)',
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { 
+        y: { 
+          beginAtZero: true 
+        } 
+      },
+      tooltips: {
+        enabled: true,
+        callbacks: {
+          // Personalizza il titolo della tooltip con la data completa
+          title: function(tooltipItem, data) {
+            const index = tooltipItem[0].index;
+            // Usa l'array fullDates per la data completa (data + ora)
+            return fullDates[index];  // Restituisce la data completa (esempio: 2025-03-31 14:05)
+          },
+          // Personalizza l'etichetta della tooltip
+          label: function(tooltipItem, data) {
+            const label = data.datasets[tooltipItem.datasetIndex].label || '';
+            const value = tooltipItem.yLabel.toFixed(2);  // Mostra con 2 decimali
+            return label + ': ' + value + ' °C';  // Mostra "Temperatura: 22.5 °C"
+          }
         }
-      });
-  
-      umiditaChart = new Chart(document.getElementById('chartUmidita'), {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Umidità',
-            data: umidita,
-            backgroundColor: 'rgba(75, 192, 192, 0.2)',
-            borderColor: 'rgba(75, 192, 192, 1)',
-            borderWidth: 2,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true } }
+      }
+    }
+  });
+
+  // Configurazione grafico per Umidità
+  umiditaChart = new Chart(document.getElementById('chartUmidita'), {
+    type: 'line',
+    data: {
+      labels: labels,  // Le etichette (ora e minuti)
+      datasets: [{
+        label: 'Umidità',
+        data: umidita,
+        backgroundColor: 'rgba(75, 192, 192, 0.2)',
+        borderColor: 'rgba(75, 192, 192, 1)',
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } },
+      tooltips: {
+        enabled: true,
+        callbacks: {
+          title: function(tooltipItem, data) {
+            const index = tooltipItem[0].index;
+            // Usa l'array fullDates per la data completa (data + ora)
+            return fullDates[index];  // Restituisce la data completa (esempio: 2025-03-31 14:05)
+          },
+          label: function(tooltipItem, data) {
+            const label = data.datasets[tooltipItem.datasetIndex].label || '';
+            const value = tooltipItem.yLabel.toFixed(2);
+            return label + ': ' + value + ' %';  // Mostra "Umidità: 45%"
+          }
         }
-      });
-  
-      fumoChart = new Chart(document.getElementById('chartFumo'), {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Fumo',
-            data: fumo,
-            backgroundColor: 'rgba(54, 162, 235, 0.2)',
-            borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 2,
-            tension: 0.3
-          }]
-        },
-        options: {
-          responsive: true,
-          scales: { y: { beginAtZero: true } }
+      }
+    }
+  });
+
+  // Configurazione grafico per Fumo
+  fumoChart = new Chart(document.getElementById('chartFumo'), {
+    type: 'line',
+    data: {
+      labels: labels,  // Le etichette (ora e minuti)
+      datasets: [{
+        label: 'Fumo',
+        data: fumo,
+        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+        borderColor: 'rgba(54, 162, 235, 1)',
+        borderWidth: 2,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      scales: { y: { beginAtZero: true } },
+      tooltips: {
+        enabled: true,
+        callbacks: {
+          title: function(tooltipItem, data) {
+            const index = tooltipItem[0].index;
+            // Usa l'array fullDates per la data completa (data + ora)
+            return fullDates[index];  // Restituisce la data completa (esempio: 2025-03-31 14:05)
+          },
+          label: function(tooltipItem, data) {
+            const label = data.datasets[tooltipItem.datasetIndex].label || '';
+            const value = tooltipItem.yLabel.toFixed(2);
+            return label + ': ' + value + ' ppm';  // Mostra "Fumo: 0.8 ppm"
+          }
         }
-      });
-    });
-  
+      }
+    }
+  });
+});
     // ✅ Queste funzioni DEVONO essere fuori da $(document).ready()
     function filterChartData() {
       const startDate = document.getElementById('startDate').value;
@@ -323,9 +378,9 @@ div.top-controls .dataTables_filter {
       fetch(`/get_data_filter?start_date=${startDate} 00:00:00&end_date=${endDate} 23:59:59`)
         .then(res => res.json())
         .then(data => {
-  const labels = data.map(d => {
+    const labels = data.map(d => {
     const date = new Date(d.data_ora);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' , timeZone: 'UTC'});
   });
 
   const temperatura = data.map(d => d.temperatura);

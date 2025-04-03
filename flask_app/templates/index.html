@@ -440,7 +440,9 @@ function aggiornaEventi() {
         });
 
         eventiTable = $('#eventiTable').DataTable({
-          dom: '<"top-buttons"B><"top-controls"lf>rtip',
+        "pageLength": 5, 
+        "lengthMenu": [5, 10, 25, 50],  
+        dom: '<"top-buttons"B><"top-controls"lf>rtip',
           buttons: [
             {
               extend: 'csv',
@@ -480,10 +482,13 @@ function aggiornaEventi() {
       const badge = document.getElementById('badge-stato-ambiente');
     badge.classList.remove('ambiente-ok', 'ambiente-warning', 'ambiente-danger');
 
-if (d.temperatura >= 35 || d.fumo >= 1) {
-  badge.textContent = '🔴 Pericolo: valori critici!';
+  if (d.temperatura >= 0.75 && d.fumo >= 0.8) {
+  badge.textContent = '🔴 Emergenza: valori critici!';
   badge.classList.add('ambiente-danger');
-} else if (d.temperatura >= 30 || d.fumo >= 0.5) {
+} else if (d.temperatura >= 0.5 && d.fumo >= 0.6) {
+  badge.textContent = '🟡 Pericolo: valori elevati';
+  badge.classList.add('ambiente-warning');
+} else if (d.temperatura >= 0.25 && d.fumo >= 0.3) {
   badge.textContent = '🟡 Attenzione: valori elevati';
   badge.classList.add('ambiente-warning');
 } else {

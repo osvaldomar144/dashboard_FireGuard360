@@ -1,0 +1,31 @@
+<!-- templates/profilo.html -->
+{% extends "base.html" %}
+{% block content %}
+<div class="container-fluid">
+  <h1 class="h3 mb-4 text-gray-800">Profilo Utente</h1>
+
+  <div class="row">
+    <div class="col-lg-6">
+        <form method="POST" action="{{ url_for('aggiorna_profilo') }}" enctype="multipart/form-data">
+            <div class="form-group">
+              <label for="username">Nome utente</label>
+              <input type="text" class="form-control" id="username" name="username" value="{{ username }}" required>
+            </div>
+          
+            <div class="form-group">
+              <label for="password">Nuova password (facoltativa)</label>
+              <input type="password" class="form-control" id="password" name="password">
+            </div>
+            
+            <div class="form-group">
+              <label for="avatar">Immagine Profilo</label>
+              <input type="file" class="form-control" id="avatar" name="avatar">
+            </div>
+          
+            <button type="submit" class="btn btn-primary">Salva</button>
+            <a href="{{ url_for('index') }}" class="btn btn-secondary">Annulla</a>
+          </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
