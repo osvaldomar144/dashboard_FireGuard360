@@ -9,13 +9,16 @@
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap4.min.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap4.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
   <style>
     .table-responsive {
       padding: 1rem;
     }
+
     .chart-section {
       padding: 1rem 2rem;
     }
+
     .chart-card {
       background: white;
       border-radius: 8px;
@@ -23,87 +26,83 @@
       padding: 20px;
       margin-bottom: 20px;
     }
-   
-    .col-md-3{
-        margin-left: 40px;
-        padding: 0px;
+
+    .col-md-3 {
+      margin-left: 40px;
+      padding: 0px;
     }
 
     .dt-buttons .btn {
-  background-color: white;
-  color: inherit;
-  transition: all 0.2s ease-in-out;
+      background-color: white;
+      color: inherit;
+      transition: all 0.2s ease-in-out;
+    }
+
+    .btn-outline-primary:hover {
+      background-color: #0d6efd;
+      color: white;
+      border-color: #0d6efd;
+    }
+
+    .btn-outline-success:hover {
+      background-color: #198754;
+      color: white;
+      border-color: #198754;
+    }
+
+    .btn-outline-danger:hover {
+      background-color: #dc3545;
+      color: white;
+      border-color: #dc3545;
+    }
+
+    .btn-outline-secondary {
+      color: #6c757d;
+      border-color: #ced4da;
+      background-color: white;
+    }
+
+    .btn-outline-secondary:hover {
+      background-color: #e2e6ea;
+      border-color: #adb5bd;
+      color: #212529;
+    }
+
+    .dt-buttons .btn {
+      margin-right: 8px;
+      margin-bottom: 6px;
+    }
+
+    div.dataTables_wrapper div.dataTables_length,
+    div.dataTables_wrapper div.dataTables_filter {
+      display: inline-block;
+      margin-bottom: 10px;
+      vertical-align: middle;
+    }
+
+    div.top-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    div.top-controls .dataTables_length,
+    div.top-controls .dataTables_filter {
+      margin: 0;
+    }
+
+/* Ingrandire il pulsante "Esporta Dati" */
+#dropdownMenuButton {
+  font-size: 0.99rem; /* Aumenta la dimensione del testo */
+  padding: 0.3rem 0.90rem; /* Aumenta il padding per ingrandire il pulsante */
+  height: 38px; /* Aumenta l'altezza */
+  width: auto; /* Imposta la larghezza automatica in base al contenuto */
+ 
 }
 
-
-/* Hover: comportamento nativo Bootstrap outline */
-.btn-outline-primary:hover {
-  background-color: #0d6efd;
-  color: white;
-  border-color: #0d6efd;
-}
-.btn-outline-success:hover {
-  background-color: #198754;
-  color: white;
-  border-color: #198754;
-}
-.btn-outline-danger:hover {
-  background-color: #dc3545;
-  color: white;
-  border-color: #dc3545;
-}
-.btn-outline-secondary {
-  color: #6c757d;
-  border-color: #ced4da;         /* grigio chiarissimo */
-  background-color: white;
-}
-
-.btn-outline-secondary:hover {
-  background-color: #e2e6ea;     /* grigio soft al passaggio */
-  border-color: #adb5bd;
-  color: #212529;
-}
-.dt-buttons .btn {
-  margin-right: 8px;
-  margin-bottom: 6px;
-}
-
-div.dataTables_wrapper div.dataTables_length,
-div.dataTables_wrapper div.dataTables_filter {
-  display: inline-block;
-  margin-bottom: 10px;
-  vertical-align: middle;
-}
-
-/* Allinea search a destra */
-div.dataTables_wrapper div.dataTables_filter {
-  float: right;
-}
-
-/* Allinea "Show entries" a sinistra */
-div.dataTables_wrapper div.dataTables_length {
-  float: left;
-}
-
-/* Spazio tra pulsanti di esportazione e i controlli */
-div.top-buttons {
-  margin-bottom: 10px;
-}
-
-/* Allinea Show entries e Search affiancati */
-div.top-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 10px;
-}
-
-div.top-controls .dataTables_length,
-div.top-controls .dataTables_filter {
-  margin: 0;
-}
-
+ 
   </style>
 </head>
 
@@ -151,14 +150,11 @@ div.top-controls .dataTables_filter {
             </div>
           </div>
 
+          <!-- Filtro per data singola per i grafici -->
           <div class="row align-items-end mb-4">
             <div class="col-md-3">
-              <label for="startDate" class="form-label">Data Inizio</label>
+              <label for="startDate" class="form-label">Filtro per Data</label>
               <input type="date" id="startDate" class="form-control">
-            </div>
-            <div class="col-md-3">
-              <label for="endDate" class="form-label">Data Fine</label>
-              <input type="date" id="endDate" class="form-control">
             </div>
             <div class="col-md-3 d-flex align-items-end">
               <button class="btn btn-primary w-85" onclick="filterChartData()">Filtra</button>
@@ -169,30 +165,77 @@ div.top-controls .dataTables_filter {
           <div class="row chart-section">
             <div class="col-lg-6">
               <div class="chart-card">
-                <h6 class="text-primary">Temperatura - Ultimi dati</h6>
+                <h6 class="text-primary" id="chartTitleTemperatura">Temperatura - Dati Giornalieri</h6>
                 <canvas id="chartTemperatura"></canvas>
                 <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartTemperatura', 'grafico_temperatura')">
-                    📤 Esporta Grafico
-                  </button>
+                  📤 Esporta Grafico
+                </button>
               </div>
             </div>
             <div class="col-lg-6">
               <div class="chart-card">
-                <h6 class="text-primary">Fumo - Ultimi dati</h6>
+                <h6 id="chartTitleFumo" class="text-primary">Fumo - Dati Giornalieri</h6>
                 <canvas id="chartFumo"></canvas>
-                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartFumo', 'grafico_fumo')">
-                    📤 Esporta Grafico
-                  </button>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartFumo', 'grafico_fumo')">📤 Esporta Grafico</button>
               </div>
             </div>
+            
             <div class="col-lg-6">
               <div class="chart-card">
-                <h6 class="text-primary">Umidità - Ultimi dati</h6>
+                <h6 id="chartTitleUmidita" class="text-primary">Umidità - Dati Giornalieri</h6>
                 <canvas id="chartUmidita"></canvas>
-                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartUmidita', 'grafico_umidita')">
-                    📤 Esporta Grafico
-                  </button>
+                <button class="btn btn-outline-primary btn-sm mt-3" onclick="exportChart('chartUmidita', 'grafico_umidita')">📤 Esporta Grafico</button>
               </div>
+            </div>
+          </div>
+
+          <div class="row align-items-end mb-4">
+            <div class="col-md-3">
+              <label for="dateRange" class="form-label">Seleziona intervallo di date</label>
+              <input type="text" id="dateRange" class="form-control" placeholder="">
+            </div>
+          
+            <!-- Colonna per il bottone "Filtra" -->
+            <div class="col-md-3 d-flex align-items-end">
+              <button class="btn btn-primary w-85" onclick="filterDataRange()">Filtra</button>
+            </div>
+          
+  
+          </div>
+          <div class="card shadow mb-4" id="rangeDataTableCard" style="display: none;">
+            <div class="card-header py-3">
+              <h6 class="m-0 font-weight-bold text-primary">📄 Dati Medi per Range di Date</h6>
+            </div>
+            <div class="card-body">
+              <div class="table-responsive">
+                <table id="dataRangeTable" class="table table-bordered" width="100%" cellspacing="0">
+                  <thead>
+                    <tr>
+                      <th>Data e Ora</th>
+                      <th>Temperatura Media (°C)</th>
+                      <th>Umidità Media (%)</th>
+                      <th>Fumo Medio (ppm)</th>
+                    </tr>
+                  </thead>
+                  <tbody id="dataRangeTableBody">
+                    <!-- I dati saranno inseriti qui dinamicamente -->
+                  </tbody>
+                </table>
+              </div>
+              <!-- Colonna per il bottone "Esporta Dati" con una classe personalizzata per il margine -->
+            <div class="col-md-12 d-flex justify-content-end align-items-end px-0" style="margin-top: 0px;">
+              <div class="dropdown">
+                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                  <i class="fas fa-file-export mr-1"></i> Esporta dati
+                </button>
+                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                  <button class="dropdown-item dropdown-export-option" data-format="csv">📥 CSV</button>
+                  <button class="dropdown-item dropdown-export-option" data-format="excel">📊 Excel</button>
+                  <button class="dropdown-item dropdown-export-option" data-format="pdf">📄 PDF</button>
+                  <button class="dropdown-item dropdown-export-option" data-format="print">🖨️ Stampa</button>
+                </div>
+              </div>
+            </div>
             </div>
           </div>
 
@@ -201,19 +244,27 @@ div.top-controls .dataTables_filter {
     </div>
   </div>
 
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap4.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
-<script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap4.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap4.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.print.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
+<!-- Carica il plugin autoTable -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
 
+  
   <script>
     let temperaturaChart;
     let umiditaChart;
@@ -260,7 +311,7 @@ div.top-controls .dataTables_filter {
     data: {
       labels: labels,  // Le etichette (solo ora e minuti)
       datasets: [{
-        label: 'Temperatura',
+        label: 'Temperatura Media',
         data: temperatura,
         backgroundColor: 'rgba(255, 99, 132, 0.2)',
         borderColor: 'rgba(255, 99, 132, 1)',
@@ -301,7 +352,7 @@ div.top-controls .dataTables_filter {
     data: {
       labels: labels,  // Le etichette (ora e minuti)
       datasets: [{
-        label: 'Umidità',
+        label: 'Umidità Media',
         data: umidita,
         backgroundColor: 'rgba(75, 192, 192, 0.2)',
         borderColor: 'rgba(75, 192, 192, 1)',
@@ -336,7 +387,7 @@ div.top-controls .dataTables_filter {
     data: {
       labels: labels,  // Le etichette (ora e minuti)
       datasets: [{
-        label: 'Fumo',
+        label: 'Fumo Medio',
         data: fumo,
         backgroundColor: 'rgba(54, 162, 235, 0.2)',
         borderColor: 'rgba(54, 162, 235, 1)',
@@ -367,37 +418,51 @@ div.top-controls .dataTables_filter {
 });
     // ✅ Queste funzioni DEVONO essere fuori da $(document).ready()
     function filterChartData() {
-      const startDate = document.getElementById('startDate').value;
-      const endDate = document.getElementById('endDate').value;
-  
-      if (!startDate || !endDate) {
-        alert("Inserisci entrambe le date!");
-        return;
+  const startDate = document.getElementById('startDate').value;
+
+  if (!startDate) {
+    alert("Inserisci una data!");
+    return;
+  }
+
+  // Fai la richiesta per un solo giorno
+  fetch(`/get_data_filter?start_date=${startDate}`)
+    .then(res => res.json())
+    .then(data => {
+      // Controlla che i dati siano nell'array corretto
+      if (Array.isArray(data.chart_labels) && Array.isArray(data.chart_temperatura) && 
+          Array.isArray(data.chart_fumo) && Array.isArray(data.chart_umidita)) {
+        const labels = data.chart_labels;
+        const temperatura = data.chart_temperatura;
+        const umidita = data.chart_umidita;
+        const fumo = data.chart_fumo;
+
+        // Aggiorna il titolo del grafico con la data selezionata
+        const selectedDate = new Date(startDate);
+        const formattedDate = selectedDate.toLocaleDateString('it-IT'); // Formato: 05/04/2025
+        document.getElementById('chartTitleTemperatura').textContent = `Temperatura - Dati Giornalieri del ${formattedDate}`;
+        document.getElementById('chartTitleUmidita').textContent = `Umidità - Dati Giornalieri del ${formattedDate}`;
+        document.getElementById('chartTitleFumo').textContent = `Fumo - Dati Giornalieri del ${formattedDate}`;
+
+        // Chiama updateChart per ogni grafico
+        updateChart(temperaturaChart, labels, temperatura);
+        updateChart(fumoChart, labels, fumo);
+        updateChart(umiditaChart, labels, umidita);
+      } else {
+        console.error("Dati non nel formato corretto:", data);
+        alert("Errore nei dati ricevuti dal server");
       }
-  
-      fetch(`/get_data_filter?start_date=${startDate} 00:00:00&end_date=${endDate} 23:59:59`)
-        .then(res => res.json())
-        .then(data => {
-    const labels = data.map(d => {
-    const date = new Date(d.data_ora);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' , timeZone: 'UTC'});
-  });
-
-  const temperatura = data.map(d => d.temperatura);
-  const umidita = data.map(d => d.umidita);
-  const fumo = data.map(d => d.fumo);
-
-  updateChart(temperaturaChart, labels, temperatura);
-  updateChart(fumoChart, labels, fumo);
-  updateChart(umiditaChart, labels, umidita);
-});
-    }
-  
-    function updateChart(chart, labels, data) {
-      chart.data.labels = labels;
-      chart.data.datasets[0].data = data;
-      chart.update();
-    }
+    })
+    .catch(error => {
+      console.error("Errore nella richiesta:", error);
+      alert("Si è verificato un errore durante il caricamento dei dati.");
+    });
+}
+function updateChart(chart, labels, data) {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+}
 
     function exportChart(canvasId, filename) {
   const canvas = document.getElementById(canvasId);
@@ -406,4 +471,163 @@ div.top-controls .dataTables_filter {
   link.download = `${filename}.png`;
   link.click();
 }
+
+
+flatpickr("#dateRange", {
+  mode: "range", // Modalità intervallo
+  dateFormat: "Y-m-d", // Formato della data
+  onChange: function(selectedDates) {
+    // Assicurati che siano state selezionate entrambe le date
+    if (selectedDates.length === 2) {
+      const startDate = selectedDates[0].toISOString().split("T")[0]; // Data di inizio
+      const endDate = selectedDates[1].toISOString().split("T")[0];   // Data di fine
+      // Attiva il pulsante di filtro solo quando entrambe le date sono selezionate
+      document.querySelector('.btn.btn-primary').disabled = false;
+      // Salva le date selezionate nel caso il pulsante venga premuto
+      window.selectedStartDate = startDate;
+      window.selectedEndDate = endDate;
+    }
+  }
+});
+
+function updateTable(data) {
+    const tableBody = document.getElementById('dataRangeTableBody');
+    tableBody.innerHTML = ''; // Pulisce la tabella precedente
+
+    // Aggiungi le righe alla tabella
+    data.chart_labels.forEach((label, index) => {
+      const row = document.createElement('tr');
+      row.innerHTML = `
+      <td>${label}</td>
+      <td>${parseFloat(data.chart_temperatura[index]).toFixed(2)}</td>
+      <td>${parseFloat(data.chart_umidita[index]).toFixed(2)}</td>
+      <td>${parseFloat(data.chart_fumo[index]).toFixed(2)}</td>
+    `;
+      tableBody.appendChild(row);
+    });
+
+    // Mostra la tabella se non è visibile
+    document.getElementById('rangeDataTableCard').style.display = 'block';
+  }
+
+
+// Funzione che viene chiamata quando il pulsante "Filtra" è cliccato
+function filterDataRange() {
+  const startDate = window.selectedStartDate;
+  const endDate = window.selectedEndDate;
+
+  // Verifica che le date siano selezionate correttamente
+  if (!startDate || !endDate) {
+    alert("Seleziona l'intervallo di date!");
+    return;
+  }
+
+  // Fai la richiesta al server per ottenere i dati filtrati per l'intervallo di date
+  fetch(`/get_data_range?start_date=${startDate} 00:00:00&end_date=${endDate} 23:59:59`)
+    .then(res => res.json())
+    .then(data => {
+      // Gestisci i dati ricevuti e aggiorna la tabella o i grafici
+      console.log(data);
+      // Codice per aggiornare la tabella dei dati medi
+      // Se hai una tabella con i dati medi, aggiorna qui la tabella con i nuovi dati
+      updateTable(data);
+    })
+    .catch(error => {
+      console.error("Errore nella richiesta:", error);
+      alert("Si è verificato un errore durante il caricamento dei dati.");
+    });
+}
+
+document.querySelectorAll('.dropdown-export-option').forEach(button => {
+  button.addEventListener('click', function() {
+    const format = this.getAttribute('data-format');
+    exportTable(format); // Esporta nel formato selezionato
+  });
+});
+function exportTable(format) {
+    const table = document.getElementById('dataRangeTable');
+
+    // Controlliamo quale formato è stato selezionato
+    if (format === 'csv') {
+      exportCSV(table);
+    } else if (format === 'excel') {
+      exportExcel(table);
+    } else if (format === 'pdf') {
+      exportPDF(table);
+    } else if (format === 'print') {
+      exportPrint(table);
+    }
+  }
+// Funzione per esportare la tabella in formato CSV
+function exportCSV(table) {
+    let csv = '';
+    const headers = table.querySelectorAll('thead th');
+    headers.forEach(header => {
+      csv += header.innerText + ',';
+    });
+    csv = csv.slice(0, -1) + '\n'; // Rimuove l'ultima virgola e aggiunge una nuova riga
+
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      cells.forEach(cell => {
+        csv += cell.innerText + ',';
+      });
+      csv = csv.slice(0, -1) + '\n'; // Rimuove l'ultima virgola e aggiunge una nuova riga
+    });
+
+    const link = document.createElement('a');
+    link.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv);
+    link.download = 'dati.csv';
+    link.click();
+  }
+
+  // Funzione per esportare la tabella in formato Excel (XLSX)
+  function exportExcel(table) {
+    const wb = XLSX.utils.table_to_book(table, { sheet: 'Sheet 1' });
+    XLSX.writeFile(wb, 'dati.xlsx');
+  }
+  const { jsPDF } = window.jspdf;
+
+// Funzione per esportare la tabella in formato PDF
+function exportPDF(table) {
+  const doc = new jsPDF();
+  
+  // Usa autoTable per aggiungere la tabella
+  doc.autoTable({ html: table });
+  
+  // Salva il documento PDF
+  doc.save('dati.pdf');
+}
+  
+
+  // Funzione per esportare la tabella in formato Stampa
+  function exportPrint(table) {
+    const printWindow = window.open('', '', 'height=600,width=800');
+    printWindow.document.write('<html><head><title>Stampa Tabella</title></head><body>');
+    printWindow.document.write(table.outerHTML);
+    printWindow.document.write('</body></html>');
+    printWindow.document.close();
+    printWindow.print();
+  }
+
+  // Funzione principale per gestire l'esportazione
+  window.onload = function () {
+  const today = new Date();
+  const formattedToday = today.toLocaleDateString('it-IT'); // Formato: 05/04/2025
+  document.getElementById('chartTitleTemperatura').textContent = `Temperatura - Dati Giornalieri del ${formattedToday}`;
+  document.getElementById('chartTitleUmidita').textContent = `Umidità - Dati Giornalieri del ${formattedToday}`;
+  document.getElementById('chartTitleFumo').textContent = `Fumo - Dati Giornalieri del ${formattedToday}`;
+
+  aggiornaDatiSensori();
+  aggiornaEventi();
+  aggiornaStats();
+
+  setInterval(() => {
+    aggiornaDatiSensori();
+    aggiornaEventi();
+    aggiornaStats();
+  }, 30000);
+};
+
   </script>

@@ -336,7 +336,7 @@
 
           
           <!-- Sezione Riepilogo Statistiche Compatte -->
-          <div class="d-flex align-items-center justify-content-between mb-2 mt-4">
+          <!-- <div class="d-flex align-items-center justify-content-between mb-2 mt-4">
             <div class="d-flex align-items-center">
               <h5 class="mb-0 font-weight-bold">📊 Statistiche Medie</h5>
               <i class="fas fa-info-circle info-icon ml-2" data-toggle="tooltip" title="Media dei valori raccolti nel periodo selezionato."></i>
@@ -354,11 +354,11 @@
             <button onclick="aggiornaStats()" class="btn btn-sm btn-outline-secondary ml-auto">
               <i class="fas fa-sync-alt mr-1"></i> Aggiorna
             </button>
-          </div>
+          </div> -->
 
-          <div class="row mt-4 mb-3 justify-content-center">
+         <!--  <div class="row mt-4 mb-3 justify-content-center"> -->
             <!-- Card Temperatura -->
-            <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
+           <!--  <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
               <div class="card card-ios text-center h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                   <div class="emoji">🌡️</div>
@@ -366,10 +366,10 @@
                   <p id="media-temperatura">-- °C</p>
                 </div>
               </div>
-            </div>
+            </div> -->
           
             <!-- Card Umidità -->
-            <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
+           <!--  <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
               <div class="card card-ios text-center h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                   <div class="emoji">💧</div>
@@ -377,10 +377,10 @@
                   <p id="media-umidita">-- %</p>
                 </div>
               </div>
-            </div>
+            </div> -->
           
             <!-- Card Fumo -->
-            <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
+         <!--    <div class="col-sm-12 col-md-4 col-lg-3 mb-3">
               <div class="card card-ios text-center h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                   <div class="emoji">🚬</div>
@@ -390,7 +390,7 @@
               </div>
             </div>
           </div>
-          </div>
+        </div> -->
 
           
           </div>
@@ -562,7 +562,7 @@ $(function () {
   });
 
   // Funzione per aggiornare le medie
-  function aggiornaStats() {
+ /*  function aggiornaStats() {
   const range = document.getElementById('range-select').value;
 
   fetch(`/get_stats?range=${range}`)
@@ -572,27 +572,27 @@ $(function () {
       document.getElementById('media-umidita').textContent = `${data.media_umidita} %`;
       document.getElementById('media-fumo').textContent = `${data.media_fumo} ppm`;
     });
-}
+} */
 
 function aggiornaTutto() {
   aggiornaDatiSensori();
   aggiornaEventi();
-  aggiornaStats();
+  //aggiornaStats();
 }
 
 // Se cambia il range, aggiorna
-document.getElementById('range-select').addEventListener('change', aggiornaStats);
+//document.getElementById('range-select').addEventListener('change', aggiornaStats);
 
 
 window.onload = function () {
   aggiornaEventi();
   aggiornaDatiSensori();
-  aggiornaStats();
+  //aggiornaStats();
 
   setInterval(() => {
     aggiornaDatiSensori();
     aggiornaEventi();
-    aggiornaStats();
+    //aggiornaStats();
   }, 30000);
 };
   </script>

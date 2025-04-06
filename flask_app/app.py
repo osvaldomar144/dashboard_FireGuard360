@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 import random
 import os 
 from werkzeug.utils import secure_filename
+import pytz
+from datetime import datetime
 
 app = Flask(__name__)
 
@@ -156,41 +158,87 @@ def get_stats():
        
     })
 
+
+import pytz
+from datetime import datetime
+
 @app.route('/get_data_filter', methods=['GET'])
 def get_filtered_data():
     start_date = request.args.get('start_date')
-    end_date = request.args.get('end_date')
+    # end_date = request.args.get('end_date')  # La data fine viene commentata
 
-    # Debug: stampa le date ricevute
+    # Debug: stampa la data ricevuta
     print(f"Start Date: {start_date}")
-    print(f"End Date: {end_date}")
+    # print(f"End Date: {end_date}")  # Commentato per il momento
 
-    # Connessione al database per recuperare i dati filtrati in base al range di date
+    # Connessione al database per recuperare i dati filtrati per il giorno specifico
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Crea la query per recuperare i dati in base al range di date
+    # Modifica della query per recuperare i dati per un singolo giorno (start_date)
     query = """
-    SELECT * FROM dati_arduino 
+    SELECT
+        DATE_FORMAT(data_ora, "%Y-%m-%d %H:00:00") AS hour,
+        AVG(temperatura) AS avg_temperatura,
+        AVG(umidita) AS avg_umidita,
+        AVG(fumo) AS avg_fumo
+    FROM dati_arduino
     WHERE data_ora BETWEEN %s AND %s
+    GROUP BY hour
+    ORDER BY hour;
     """
-    cur.execute(query, (start_date, end_date))  # Usa i segnaposto per prevenire SQL injection
+    
+    # Converti la start_date in un formato "YYYY-MM-DD 00:00:00" per l'inizio della giornata
+    start_datetime = f"{start_date} 00:00:00"
+    # Impostiamo la fine del giorno alle 23:59:59
+    end_datetime = f"{start_date} 23:59:59"  # Impostiamo la fine alla fine della giornata
+
+    # Esegui la query con i dati filtrati per il giorno specifico
+    cur.execute(query, (start_datetime, end_datetime))  # Passiamo solo il singolo giorno
     data = cur.fetchall()  # Ottieni i risultati
+
+    # Definisci il fuso orario locale (ad esempio 'Europe/Rome')
+    local_tz = pytz.timezone('Europe/Rome')
+
+    # Crea una lista di tutte le ore della giornata (da 00:00 a 23:00)
+    all_hours = [f"{i:02}:00" for i in range(24)]
+
+    # Crea un dizionario con le ore come chiave e i valori come una lista vuota inizialmente
+    data_dict = {hour: {'temperatura': None, 'umidita': None, 'fumo': None} for hour in all_hours}
+
+    # Aggiorna i dati solo per le ore presenti
+    for row in data:  # Per ogni riga filtrata
+        hour = row[0]  # La chiave ora è nel formato 'YYYY-MM-DD HH:00:00'
+        hour_formatted = datetime.strptime(hour, "%Y-%m-%d %H:%M:%S").strftime("%H:%M")  # Converte l'ora al formato "%H:%M"
+        data_dict[hour_formatted]['temperatura'] = row[1]
+        data_dict[hour_formatted]['umidita'] = row[2]
+        data_dict[hour_formatted]['fumo'] = row[3]
+
+    # Ora estrai i dati per popolare i grafici e le etichette
+    labels = []
+    full_dates = []
+    temperatura = []
+    fumo = []
+    umidita = []
+
+    # Aggiungi tutte le ore da 00:00 a 23:00, anche quelle senza dati
+    for hour in all_hours:
+        labels.append(hour)  # Aggiungi l'ora alle etichette
+        full_dates.append(hour)  # Conserva l'ora completa per altre necessità
+        temperatura.append(data_dict[hour]['temperatura'] if data_dict[hour]['temperatura'] is not None else 0)
+        umidita.append(data_dict[hour]['umidita'] if data_dict[hour]['umidita'] is not None else 0)
+        fumo.append(data_dict[hour]['fumo'] if data_dict[hour]['fumo'] is not None else 0)
 
     cur.close()
     conn.close()
 
-    # Trasforma i dati in formato JSON
-    result = [{
-        'temperatura': row[1],
-        'umidita': row[2],
-        'fumo': row[3],
-        'data_ora': row[4],
-    } for row in data]
-
-    return jsonify(result)
-
-
+    return jsonify({
+        'chart_labels': labels,
+        'chart_temperatura': temperatura,
+        'chart_fumo': fumo,
+        'chart_umidita': umidita,
+        'full_dates': full_dates
+    })
 
 @app.route('/dati-arduino')
 def dati_arduino():
@@ -198,12 +246,25 @@ def dati_arduino():
     cur = conn.cursor()
 
     # Query per ottenere gli ultimi 10 record (per grafico)
-    cur.execute('SELECT id, temperatura, umidita, fumo, data_ora FROM dati_arduino ORDER BY data_ora DESC LIMIT 10')
+    cur.execute('''
+    SELECT
+        DATE_FORMAT(data_ora, "%Y-%m-%d %H:00:00") AS hour,
+        AVG(temperatura) AS avg_temperatura,
+        AVG(umidita) AS avg_umidita,
+        AVG(fumo) AS avg_fumo
+    FROM dati_arduino
+    WHERE data_ora >= CURDATE()
+    GROUP BY hour
+    ORDER BY hour;
+    ''')
     rows2 = cur.fetchall()
 
     # Query per ottenere tutti i record (per la tabella)
     cur.execute('SELECT id, temperatura, umidita, fumo, data_ora FROM dati_arduino ORDER BY data_ora DESC')
     rows = cur.fetchall()
+
+    # Definisci il fuso orario locale (ad esempio 'Europe/Rome')
+    local_tz = pytz.timezone('Europe/Rome')
 
     dati = []
     labels = []
@@ -212,24 +273,54 @@ def dati_arduino():
     fumo = []
     umidita = []
 
-    # Popola i dati per la tabella
+    # Popola i dati per la tabella (gestisce tzinfo)
     for row in rows[::-1]:  # Inverti per mostrare i dati in ordine cronologico
+        data_ora = row[4]
+        # Converte il campo data_ora (che potrebbe essere una stringa o datetime senza fuso orario) in un oggetto datetime
+        if data_ora.tzinfo is None:
+            # Se non ha il fuso orario, localizza il datetime come UTC (o quello che è il fuso orario di origine)
+            data_ora = pytz.utc.localize(data_ora)  
+        
+        # Converte la data_ora al fuso orario locale
+        data_ora_local = data_ora.astimezone(local_tz)
+        
         dati.append({
             'id': row[0],
             'temperatura': row[1],
             'umidita': row[2],
             'fumo': row[3],
-            'data_ora': row[4].strftime("%Y-%m-%d %H:%M:%S")
+            'data_ora': data_ora_local.strftime("%Y-%m-%d %H:%M:%S")  # Data in formato locale
         })
 
-    # Popola i dati per i grafici (ultimi 10)
+    # Crea una lista di tutte le ore della giornata (da 00:00 a 23:00)
+    all_hours = [f"{i:02}:00" for i in range(24)]
+
+    # Popola i dati per i grafici (ultimi 10, con gestione del fuso orario)
+    # Crea un dizionario con le ore come chiave e i valori come una lista vuota inizialmente
+    data_dict = {hour: {'temperatura': None, 'umidita': None, 'fumo': None} for hour in all_hours}
+
+    # Aggiorna i dati solo per le ore presenti
     for row2 in rows2[::-1]:  # Inverti per grafici in ordine cronologico
-        full_date = row2[4].strftime("%Y-%m-%d %H:%M")  # Data completa (esempio: 2025-03-31 14:05)
-        labels.append(row2[4].strftime("%H:%M"))  # Per l'asse X, mostra solo ora e minuti
-        full_dates.append(full_date)  #
-        temperatura.append(row2[1])
-        umidita.append(row2[2])  # 👈 aggiunto
-        fumo.append(row2[3])
+        data_ora = row2[4]
+        if data_ora.tzinfo is None:
+            # Se non ha il fuso orario, localizza il datetime come UTC (o quello che è il fuso orario di origine)
+            data_ora = pytz.utc.localize(data_ora)
+
+        # Converte la data_ora al fuso orario locale
+        data_ora_local = data_ora.astimezone(local_tz)
+
+        hour = data_ora_local.strftime("%H:00")
+        data_dict[hour]['temperatura'] = row2[1]
+        data_dict[hour]['umidita'] = row2[2]
+        data_dict[hour]['fumo'] = row2[3]
+
+    # Ora estrai i dati per popolare i grafici e le etichette
+    for hour in all_hours:
+        labels.append(hour)  # Aggiungi l'ora alle etichette
+        full_dates.append(hour)  # Conserva l'ora completa per altre necessità
+        temperatura.append(data_dict[hour]['temperatura'] if data_dict[hour]['temperatura'] is not None else 0)
+        umidita.append(data_dict[hour]['umidita'] if data_dict[hour]['umidita'] is not None else 0)
+        fumo.append(data_dict[hour]['fumo'] if data_dict[hour]['fumo'] is not None else 0)
 
     cur.close()
     conn.close()
@@ -243,6 +334,59 @@ def dati_arduino():
         chart_umidita=umidita,
         full_dates=full_dates
     )
+
+
+@app.route('/get_data_range', methods=['GET'])
+def get_data_range():
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    # Debug: stampa le date ricevute
+    print(f"Start Date: {start_date}")
+    print(f"End Date: {end_date}")
+
+    # Connessione al database per recuperare i dati filtrati per l'intervallo di date
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Crea la query per ottenere i dati medi per ogni ora nell'intervallo di date
+    query = """
+    SELECT
+        DATE_FORMAT(data_ora, "%Y-%m-%d %H:00:00") AS hour,
+        AVG(temperatura) AS avg_temperatura,
+        AVG(umidita) AS avg_umidita,
+        AVG(fumo) AS avg_fumo
+    FROM dati_arduino
+    WHERE data_ora BETWEEN %s AND %s
+    GROUP BY hour
+    ORDER BY hour;
+    """
+    
+    # Esegui la query con i dati filtrati per l'intervallo di date
+    cur.execute(query, (start_date, end_date))
+    data = cur.fetchall()
+
+    # Processa i dati
+    labels = []
+    temperatura = []
+    umidita = []
+    fumo = []
+
+    for row in data:
+        labels.append(row[0])  # L'ora
+        temperatura.append(row[1])  # Temperatura media
+        umidita.append(row[2])  # Umidità media
+        fumo.append(row[3])  # Fumo medio
+
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        'chart_labels': labels,
+        'chart_temperatura': temperatura,
+        'chart_fumo': fumo,
+        'chart_umidita': umidita,
+    })
 
 @app.route('/controlli')
 def controlli():
