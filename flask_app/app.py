@@ -240,12 +240,17 @@ def get_filtered_data():
         'full_dates': full_dates
     })
 
+
+
+
+
+#RIVEDERE QUESTO CODICE - forse è meglio separare e fare due app.route differenti per le due query
 @app.route('/dati-arduino')
 def dati_arduino():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Query per ottenere gli ultimi 10 record (per grafico)
+    # Query per ottenere la media per ogni ora (dati aggregati)
     cur.execute('''
     SELECT
         DATE_FORMAT(data_ora, "%Y-%m-%d %H:00:00") AS hour,
@@ -263,7 +268,7 @@ def dati_arduino():
     cur.execute('SELECT id, temperatura, umidita, fumo, data_ora FROM dati_arduino ORDER BY data_ora DESC')
     rows = cur.fetchall()
 
-    # Definisci il fuso orario locale (ad esempio 'Europe/Rome')
+    # Definisci il fuso orario locale (esempio 'Europe/Rome')
     local_tz = pytz.timezone('Europe/Rome')
 
     dati = []
@@ -276,11 +281,15 @@ def dati_arduino():
     # Popola i dati per la tabella (gestisce tzinfo)
     for row in rows[::-1]:  # Inverti per mostrare i dati in ordine cronologico
         data_ora = row[4]
-        # Converte il campo data_ora (che potrebbe essere una stringa o datetime senza fuso orario) in un oggetto datetime
-        if data_ora.tzinfo is None:
-            # Se non ha il fuso orario, localizza il datetime come UTC (o quello che è il fuso orario di origine)
-            data_ora = pytz.utc.localize(data_ora)  
+
+        # Se data_ora è una stringa, convertila in un oggetto datetime
+        if isinstance(data_ora, str):
+            data_ora = datetime.strptime(data_ora, "%Y-%m-%d %H:%M:%S")
         
+        if data_ora.tzinfo is None:
+            # Se non ha il fuso orario, localizza il datetime come UTC
+            data_ora = pytz.utc.localize(data_ora)  
+
         # Converte la data_ora al fuso orario locale
         data_ora_local = data_ora.astimezone(local_tz)
         
@@ -301,9 +310,14 @@ def dati_arduino():
 
     # Aggiorna i dati solo per le ore presenti
     for row2 in rows2[::-1]:  # Inverti per grafici in ordine cronologico
-        data_ora = row2[4]
+        data_ora = row2[0]
+        
+        # Se data_ora è una stringa, convertila in un oggetto datetime
+        if isinstance(data_ora, str):
+            data_ora = datetime.strptime(data_ora, "%Y-%m-%d %H:%M:%S")
+
         if data_ora.tzinfo is None:
-            # Se non ha il fuso orario, localizza il datetime come UTC (o quello che è il fuso orario di origine)
+            # Se non ha il fuso orario, localizza il datetime come UTC
             data_ora = pytz.utc.localize(data_ora)
 
         # Converte la data_ora al fuso orario locale
@@ -345,7 +359,7 @@ def get_data_range():
     print(f"Start Date: {start_date}")
     print(f"End Date: {end_date}")
 
-    # Connessione al database per recuperare i dati filtrati per l'intervallo di date
+    # Connessione al database per recuperare i dati filtrati per il range di date
     conn = get_db_connection()
     cur = conn.cursor()
 
@@ -387,7 +401,6 @@ def get_data_range():
         'chart_fumo': fumo,
         'chart_umidita': umidita,
     })
-
 @app.route('/controlli')
 def controlli():
     # Percorso del modello .obj

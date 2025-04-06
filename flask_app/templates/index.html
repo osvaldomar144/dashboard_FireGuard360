@@ -64,7 +64,7 @@
       margin-bottom: 10px;
     }
 
-    .card-allerta-danger {
+  .card-allerta-danger {
   background-color: #f8d7da !important; /* rosso chiaro */
   border-left: 0.4rem solid #dc3545 !important;
 }
@@ -73,6 +73,10 @@
   background-color: #fff3cd !important; /* giallo chiaro */
   border-left: 0.4rem solid #ffc107 !important;
 }
+.card-allerta-pericolo {
+  background-color: #f8c386 !important; /* giallo chiaro */
+  border-left: 0.4rem solid #e6750b !important;
+}
 
 .icon-chiara {
   color: #dee2e6 !important; /* grigio chiaro di default */
@@ -80,6 +84,10 @@
 
 .icon-warning {
   color: #856404 !important; /* marrone dorato su sfondo giallo */
+}
+
+.icon-pericolo {
+  color: #854504 !important; /* marrone dorato su sfondo giallo */
 }
 
 .icon-danger {
@@ -92,6 +100,11 @@
 .titolo-warning {
   color: #ffc107 !important; /* Giallo */
 }
+
+.titolo-pericolo {
+  color: #f77129 !important; /* Giallo */
+}
+
 
 .titolo-danger {
   color: #dc3545 !important; /* Rosso */
@@ -201,11 +214,18 @@
   border-color: #ffeeba;
 }
 
+.ambiente-pericolo {
+  background-color: #ffe9cd; /* Giallo chiaro */
+  color: #854704;            /* Marrone/giallo scuro */
+  border-color: #ffeeba;
+}
+
 .ambiente-danger {
   background-color: #f8d7da; /* Rosso chiaro */
   color: #721c24;            /* Rosso scuro testo */
   border-color: #f5c6cb;
 }
+
 
 
   </style>
@@ -482,13 +502,22 @@ function aggiornaEventi() {
       const badge = document.getElementById('badge-stato-ambiente');
     badge.classList.remove('ambiente-ok', 'ambiente-warning', 'ambiente-danger');
 
-  if (d.temperatura >= 0.75 && d.fumo >= 0.8) {
+
+    let tempNorm = (d.temperatura - 0) / (160 - 0); 
+    let smokeNorm = (d.fumo - 0) / (300 - 0);       
+
+    // Fai attenzione a non superare 1.0
+    tempNorm = Math.min(Math.max(tempNorm, 0), 1);
+    smokeNorm = Math.min(Math.max(smokeNorm, 0), 1);
+
+
+    if (tempNorm >= 0.75 && smokeNorm >= 0.8) {
   badge.textContent = '🔴 Emergenza: valori critici!';
   badge.classList.add('ambiente-danger');
-} else if (d.temperatura >= 0.5 && d.fumo >= 0.6) {
-  badge.textContent = '🟡 Pericolo: valori elevati';
-  badge.classList.add('ambiente-warning');
-} else if (d.temperatura >= 0.25 && d.fumo >= 0.3) {
+} else if (tempNorm >= 0.5 && smokeNorm >= 0.6) {
+  badge.textContent = '🟠 Pericolo: valori elevati';
+  badge.classList.add('ambiente-pericolo');
+} else if (tempNorm >= 0.25 || smokeNorm >= 0.3) {
   badge.textContent = '🟡 Attenzione: valori elevati';
   badge.classList.add('ambiente-warning');
 } else {
@@ -496,35 +525,40 @@ function aggiornaEventi() {
   badge.classList.add('ambiente-ok');
 }
 
-      // Card Temperatura
+// Card Temperatura
      
 const titoloTemp = document.getElementById('titolo-temperatura');
-titoloTemp.classList.remove('titolo-normale', 'titolo-warning', 'titolo-danger');
+titoloTemp.classList.remove('titolo-normale', 'titolo-warning', 'titolo-pericolo','titolo-danger');
 const cardTemp = document.getElementById('card-temperatura');
 const iconTemp = cardTemp.querySelector('i');
-iconTemp.classList.remove('icon-chiara', 'icon-warning', 'icon-danger');
+iconTemp.classList.remove('icon-chiara', 'icon-warning', 'icon-pericolo', 'icon-danger');
 // Card Fumo
 const cardFumo = document.getElementById('card-fumo');
 cardFumo.classList.remove(
-  'card-allerta-danger', 'card-allerta-warning',
+  'card-allerta-danger', 'card-allerta-pericolo', 'card-allerta-warning', 
   'border-left-info'
 );
 const iconFumo = cardFumo.querySelector('i');
-iconFumo.classList.remove('icon-chiara', 'icon-warning', 'icon-danger');
+iconFumo.classList.remove('icon-chiara', 'icon-warning', 'icon-pericolo', 'icon-danger');
 
 cardTemp.classList.remove(
-  'card-allerta-danger', 'card-allerta-warning',
-  'border-left-primary'
+   'card-allerta-danger', 'card-allerta-pericolo', 'card-allerta-warning', 
+  'border-left-info'
 );
 const titoloFumo = document.getElementById('titolo-fumo');
-titoloFumo.classList.remove('titolo-normale', 'titolo-warning', 'titolo-danger');
+titoloFumo.classList.remove('titolo-normale', 'titolo-warning', 'titolo-pericolo','titolo-danger');
 
-if (d.temperatura >= 35) {
+// CARD TEMPERATURA
+if (tempNorm >= 0.75) {
   cardTemp.classList.add('card-allerta-danger');
   iconTemp.classList.add('icon-danger');
   titoloTemp.classList.add('titolo-danger');
-} else if (d.temperatura >= 30) {
-  cardTemp.classList.add('card-allerta-warning');
+} else if (tempNorm >= 0.5) {
+  cardTemp.classList.add('card-allerta-pericolo');
+  iconTemp.classList.add('icon-pericolo');
+  titoloTemp.classList.add('titolo-pericolo');
+} else if (tempNorm >= 0.25) {
+  cardTemp.classList.add('card-allerta-warning'); 
   iconTemp.classList.add('icon-warning');
   titoloTemp.classList.add('titolo-warning');
 } else {
@@ -533,12 +567,15 @@ if (d.temperatura >= 35) {
   titoloTemp.classList.add('titolo-normale');
 }
 
-
-if (d.fumo >= 1) {
+if (smokeNorm >= 0.8) {
   cardFumo.classList.add('card-allerta-danger');
   iconFumo.classList.add('icon-danger');
   titoloFumo.classList.add('titolo-danger');
-} else if (d.fumo >= 0.5) {
+} else if (smokeNorm >= 0.6) {
+  cardFumo.classList.add('card-allerta-pericolo');
+  iconFumo.classList.add('icon-pericolo');
+  titoloFumo.classList.add('titolo-pericolo');
+} else if (smokeNorm >= 0.3) {
   cardFumo.classList.add('card-allerta-warning');
   iconFumo.classList.add('icon-warning');
   titoloFumo.classList.add('titolo-warning');
@@ -547,7 +584,6 @@ if (d.fumo >= 1) {
   iconFumo.classList.add('icon-chiara');
   titoloFumo.classList.add('titolo-normale');
 }
-
       // Card Umidità (rimane base verde)
       const cardUmidita = document.getElementById('card-umidita');
       cardUmidita.classList.remove('border-left-success');
@@ -601,12 +637,13 @@ window.onload = function () {
 
 
 
-<!-- 
-╔══════════════════════════════╦═════════════════════════════════════╦═══════════════╗
-║       Condizione            ║          Stato Ambiente             ║     Classe    ║
-╠══════════════════════════════╬═════════════════════════════════════╬═══════════════╣
-║ T < 30°C e Fumo < 50         ║ 🟢 Ambiente stabile                 ║ text-success  ║
-║ 30°C ≤ T < 35 oppure Fumo ≥ 50║ 🟡 Attenzione: valori elevati      ║ text-warning  ║
-║ T ≥ 35°C oppure Fumo ≥ 100   ║ 🔴 Pericolo: valori critici!        ║ text-danger   ║
-╚══════════════════════════════╩═════════════════════════════════════╩═══════════════╝
+<!-- IN BASE ALLA LOGICA SCRITTA SU TINKERCAD
+╔══════════════════════════════════════════════════════╦══════════════════════════════════════╦═════════════════════╗
+║             Condizione Combinata                    ║           Stato Ambiente             ║       Classe        ║
+╠══════════════════════════════════════════════════════╬══════════════════════════════════════╬═════════════════════╣
+║ Temperatura < 0.25  E  Fumo < 0.3                   ║ 🟢 Ambiente stabile                  ║ ambiente-ok         ║
+║ 0.25 ≤ Temperatura < 0.5  E  0.3 ≤ Fumo < 0.6       ║ 🟡 Attenzione: valori elevati        ║ ambiente-warning    ║
+║ 0.5 ≤ Temperatura < 0.75  E  0.6 ≤ Fumo < 0.8       ║ 🟠 Pericolo: valori elevati          ║ ambiente-warning    ║
+║ Temperatura ≥ 0.75  E  Fumo ≥ 0.8                   ║ 🔴 Emergenza: valori critici!        ║ ambiente-danger     ║
+╚══════════════════════════════════════════════════════╩══════════════════════════════════════╩═════════════════════╝
 -->

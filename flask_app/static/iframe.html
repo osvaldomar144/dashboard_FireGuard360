@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>3D Model with Interactive Labels</title>
+  <style>
+    body { margin: 0; }
+    canvas { display: block; }
+  </style>
+</head>
+<body>
+  <iframe
+    id="3d-model"
+    width="100%" height="500" style="border:1px solid #eeeeee;"
+    src="https://3dviewer.net/embed.html#model=https://raw.githubusercontent.com/MartinaLucianii/modelRender/refs/heads/main/3d-model%202.obj">
+  </iframe>
+
+  <div id="labels-container" style="position: absolute; top: 0; left: 0; pointer-events: auto;">
+    <!-- Le etichette 3D saranno posizionate sopra questa area -->
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    window.onload = () => {
+      const iframe = document.getElementById("3d-model");
+
+      // Quando il modello è caricato nel iframe
+      iframe.onload = () => {
+        const modelContainer = iframe.contentWindow.document;
+
+        // Imposta la scena
+        const scene = new THREE.Scene();
+
+        // Imposta la fotocamera (prospettiva)
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.z = 5;  // Posizione iniziale della fotocamera (puoi modificarla)
+
+        // Imposta il renderer
+        const renderer = new THREE.WebGLRenderer();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+
+        // Aggiungi il modello 3D
+        const loader = new THREE.GLTFLoader();
+        loader.load('https://raw.githubusercontent.com/MartinaLucianii/modelRender/refs/heads/main/3d-model%202.obj', function(gltf) {
+          scene.add(gltf.scene);
+        });
+
+        // Funzione per aggiungere etichette dinamiche
+        function addLabel(x, y, z, labelText) {
+          // Crea il div per l'etichetta
+          const labelDiv = document.createElement('div');
+          labelDiv.style.position = 'absolute';
+          labelDiv.style.background = 'rgba(0, 0, 0, 0.7)';
+          labelDiv.style.color = 'red';
+          labelDiv.style.padding = '5px 10px';
+          labelDiv.style.borderRadius = '5px';
+          labelDiv.style.pointerEvents = 'auto';
+          labelDiv.textContent = labelText;
+          
+          // Aggiungi il div delle etichette al container
+          document.getElementById('labels-container').appendChild(labelDiv);
+
+          // Converti le coordinate 3D in coordinate 2D sulla finestra
+          function updateLabelPosition() {
+            const vector = new THREE.Vector3(x, y, z);
+            vector.project(camera);  // Proietta la posizione rispetto alla fotocamera
+
+            // Calcola la posizione dell'etichetta in percentuale
+            const xPos = (vector.x * 0.5 + 0.5) * window.innerWidth;
+            const yPos = -(vector.y * 0.5 + 0.5) * window.innerHeight;
+
+            labelDiv.style.left = `${xPos}px`;
+            labelDiv.style.top = `${yPos}px`;
+          }
+
+          updateLabelPosition();
+          setInterval(updateLabelPosition, 100);
+        }
+
+        // Crea etichette per il modello
+        addLabel(-0.2, 0, 0, "Living Room");
+        addLabel(0.2, -0.1, 0, "Kitchen");
+
+        // Funzione di animazione per il rendering
+        function animate() {
+          requestAnimationFrame(animate);
+          renderer.render(scene, camera);  // Renderizza la scena con la fotocamera
+        }
+
+        animate();
+      };
+    };
+  </script>
+</body>
+</html>

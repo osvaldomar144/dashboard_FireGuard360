@@ -52,9 +52,10 @@
     <div class="card-body">
       <!-- Iframe per visualizzare il modello 3D -->
       <iframe
-        width="100%" height="500" style="border:1px solid #eeeeee;"
-        src="https://3dviewer.net/embed.html#model=https://raw.githubusercontent.com/MartinaLucianii/modelRender/refs/heads/main/3d-model 2.obj">
-      </iframe>
+      src="{{ url_for('static', filename='iframe.html') }}"
+      width="100%" height="500"
+      style="border: 1px solid #eeeeee;">
+    </iframe>
     </div>
   </div>
 </div>
