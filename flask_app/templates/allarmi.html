@@ -72,35 +72,35 @@
     }
 
     /* Badge colorati per livello di rischio */
-    .badge-danger {
-  background-color: #f8394c; /* Rosso per emergenza */
-  color: #761a1a; /* Un rosso più scuro per il testo */
+  .badge-danger {
+  background-color: #f8394c; 
+  color: #761a1a; 
   font-weight: bold;
 }
 
 /* Badge arancione (Pericolo) */
 .badge-warning {
-  background-color: #f0a730; /* Arancione per pericolo */
-  color: #8c5103; /* Un arancione più scuro per il testo */
+  background-color: #f0a730; 
+  color: #8c5103; 
   font-weight: bold;
 }
 
 .badge-attention {
-  background-color: #fbe178; /* Giallo per attenzione */
+  background-color: #fbe178; 
   color: #856404;
   font-weight: bold;
 }
 
 /* Impostazioni della lista della legenda */
 .legend {
-  margin-top: -20px; /* Riduce lo spazio sopra la legenda */
+  margin-top: -20px; 
   font-size: 0.9rem;
 }
 
 .legend ul {
-  padding-left: 0; /* Rimuovere il padding */
-  margin: 0; /* Rimuovere il margine */
-  list-style-type: none; /* Rimuovere i punti elenco */
+  padding-left: 0; 
+  margin: 0; 
+  list-style-type: none; 
 }
 
 .legend-item {
@@ -117,15 +117,15 @@
 }
 
 .badge-danger {
-  background-color: #f8394c; /* Rosso per Emergenza */
+  background-color: #f8394c; 
 }
 
 .badge-warning {
-  background-color: #f0a730; /* Arancione per Pericolo */
+  background-color: #f0a730; 
 }
 
 .badge-attention {
-  background-color: #fbe178; /* Giallo per Attenzione */
+  background-color: #fbe178; 
 }
 
 /* Colori specifici per i badge */
@@ -135,28 +135,27 @@
 
 
 
-/* Allineamento della scritta "Showing" e dei tasti "Previous" / "Next" */
+
 .dataTables_info {
   display: inline-block;
   font-size: 0.9rem;
-  margin-right: 15px; /* Distanza tra "Showing" e i tasti */
-  margin-bottom: 10px; /* Spazio tra la scritta "Showing" e la parte inferiore della tabella */
+  margin-right: 15px; 
+  margin-bottom: 10px; 
 }
 
-/* Posizionamento dei tasti "Previous" e "Next" alla fine della tabella */
+
 .dataTables_paginate {
-  float: right; /* Sposta i tasti verso la destra */
-  margin-top: 10px; /* Distanza tra la tabella e i tasti */
+  float: right; 
+  margin-top: 10px; 
 }
 
-/* Riduce lo spazio tra i pulsanti della paginazione */
+
 .dataTables_paginate .paginate_button {
   margin-right: 0 !important;
   margin-left: 0 !important;
   border-radius: 6px;
 }
 
-/* Rimuove spazio extra generato da DataTables */
 .dataTables_paginate .paginate_button + .paginate_button {
   margin-left: -1px !important;
 }
@@ -550,13 +549,13 @@ document.querySelectorAll(".dropdown-export-range").forEach(btn => {
   function aggiornaGraficoGiornaliero(data, giornoSelezionato) {
   const perOra = {};
 
-  // Inizializza tutte le 24 ore
+  
   for (let i = 0; i < 24; i++) {
     const ora = String(i).padStart(2, '0') + ":00";
     perOra[ora] = { attenzione: 0, pericolo: 0, emergenza: 0 };
   }
 
-  // Usa orario UTC + 2 per correggere il fuso
+  // Fuso orario UTC + 2 
   data.forEach(ev => {
     const d = new Date(ev.data_ora);
     let ora = d.getUTCHours();
@@ -587,7 +586,7 @@ labels.forEach((ora, i) => {
   }
 });
 
-// Calcolo aggregato globale
+
 const totaleAttenzione = datiAttenzione.reduce((a, b) => a + b, 0);
 const totalePericolo = datiPericolo.reduce((a, b) => a + b, 0);
 const totaleEmergenza = datiEmergenza.reduce((a, b) => a + b, 0);
@@ -601,67 +600,71 @@ conteggioTotaleGiornaliero = {
 document.getElementById('stat-giorno-max').textContent =
 `🕒 Fascia oraria con più eventi ${giornoSelezionato ? `(${giornoSelezionato})` : ''}: ${oraTop} (Totale: ${maxTotale})`;
 
-  const ctx = document.getElementById('graficoEventi').getContext('2d');
-  if (chartAllarmi) {
-    chartAllarmi.data.labels = labels;
-    chartAllarmi.data.datasets[0].data = datiAttenzione;
-    chartAllarmi.data.datasets[1].data = datiPericolo;
-    chartAllarmi.data.datasets[2].data = datiEmergenza;
-    chartAllarmi.update();
-  } else {
-    chartAllarmi = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: labels,
-        datasets: [
-          {
-            label: 'Attenzione',
-            data: datiAttenzione,
-            backgroundColor: '#fbe178',
-            barThickness: 10
-          },
-          {
-            label: 'Pericolo',
-            data: datiPericolo,
-            backgroundColor: '#f0a730',
-            barThickness: 10
-          },
-          {
-            label: 'Emergenza',
-            data: datiEmergenza,
-            backgroundColor: '#f8394c',
-            barThickness: 10
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        plugins: {
-          legend: { position: 'top' },
-          tooltip: { mode: 'index', intersect: false }
+const ctx = document.getElementById('graficoEventi').getContext('2d');
+if (chartAllarmi) {
+  chartAllarmi.data.labels = labels;
+  chartAllarmi.data.datasets[0].data = datiAttenzione;
+  chartAllarmi.data.datasets[1].data = datiPericolo;
+  chartAllarmi.data.datasets[2].data = datiEmergenza;
+  chartAllarmi.update();
+} else {
+  chartAllarmi = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Attenzione',
+          data: datiAttenzione,
+          backgroundColor: '#fbe178',
+          barThickness: 10
         },
-        scales: {
-          x: {
-            title: {
-              display: true,
-              text: 'Ore del giorno'
-            },
-            ticks: {
-              autoSkip: false,
-              maxRotation: 90,
-              minRotation: 45
-            }
+        {
+          label: 'Pericolo',
+          data: datiPericolo,
+          backgroundColor: '#f0a730',
+          barThickness: 10
+        },
+        {
+          label: 'Emergenza',
+          data: datiEmergenza,
+          backgroundColor: '#f8394c',
+          barThickness: 10
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        tooltip: { mode: 'index', intersect: false }
+      },
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: 'Ore del giorno'
           },
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            }
+          ticks: {
+            autoSkip: false,
+            maxRotation: 90,
+            minRotation: 45
+          }
+        },
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          },
+          title: {
+            display: true,
+            text: 'Numero di eventi (Attenzione, Pericolo, Emergenza)'
           }
         }
       }
-    });
-  }
+    }
+  });
+}
 }
 
 
@@ -701,12 +704,12 @@ function caricaStorico() {
         let badgeClass = '';
         let badgeLabel = '';
 
-        const livello = ev.livello ? ev.livello.toLowerCase() : '';  // Controlla se livello esiste
+        const livello = ev.livello ? ev.livello.toLowerCase() : '';  
 
 
-        // Ignora il livello '-'
+        // Ignoro il livello '-'
         if (livello === '-' || livello === '') {
-          return; // Non aggiungere nulla se livello è '-' o vuoto
+          return; 
         }
 
         // Logica per applicare il badge in base al livello
@@ -717,8 +720,8 @@ function caricaStorico() {
         } else if (livello === 'warning') {
           badgeClass = 'badge-attention';  // Giallo per attenzione
         } else {
-          console.log('Evento con livello non riconosciuto:', livello);  // Log per eventuali livelli non riconosciuti
-          return;  // Se non è uno dei livelli validi, ignoriamo l'evento
+          console.log('Evento con livello non riconosciuto:', livello);  
+          return;  
         }
 
         badgeLabel = `<span class="badge ${badgeClass} badge-evento">${ev.evento}</span>`;
@@ -727,7 +730,7 @@ function caricaStorico() {
 
       table.draw();
     })
-    .catch(error => console.error('Errore nel recupero degli eventi:', error));  // Aggiungi un catch per gestire errori
+    .catch(error => console.error('Errore nel recupero degli eventi:', error));  
 }
     function filtraPerTipo(tipo) {
       fetch('/get_allarmi_storico')
@@ -757,12 +760,12 @@ function caricaStorico() {
   : (dataSelezionataStringa || dataGiorno.toISOString().split('T')[0]);
   let csv = `Report Giornaliero - ${giornoStr}\n`;
 
-  // Riepilogo
+  
   csv += `\nRiepilogo del giorno\n`;
   csv += `Attenzione;Pericolo;Emergenza\n`;
   csv += `${attenzione};${pericolo};${emergenza}\n`;
 
-  // Dettaglio
+  
   csv += `\nDettaglio eventi\n`;
   csv += `Data/Ora;Descrizione;Livello\n`;
 
@@ -790,7 +793,7 @@ function esportaGiornoExcel(data, dataGiorno) {
   : (dataSelezionataStringa || dataGiorno.toISOString().split('T')[0]);
   const wb = XLSX.utils.book_new();
 
-  // Riga formattata (usa stili dopo)
+ 
   const headersRiepilogo = ['Attenzione', 'Pericolo', 'Emergenza'];
   const valoriRiepilogo = [attenzione, pericolo, emergenza];
 
@@ -801,7 +804,7 @@ function esportaGiornoExcel(data, dataGiorno) {
     ev.livello
   ]);
 
-  // Componi foglio
+  
   const allRows = [
     [`Report Giornaliero - ${giornoStr}`],
     [],
@@ -815,16 +818,16 @@ function esportaGiornoExcel(data, dataGiorno) {
 
   const ws = XLSX.utils.aoa_to_sheet(allRows);
 
-  // Applichiamo stili manuali (XLSX stile "raw")
+ 
   const boldCenterStyle = {
     font: { bold: true },
     alignment: { horizontal: "center", vertical: "center" },
     fill: { fgColor: { rgb: "D9D9D9" } } // grigio chiaro
   };
 
-  // Intestazioni Riepilogo
+ 
   ['A3', 'B3', 'C3'].forEach(cell => { if (ws[cell]) ws[cell].s = boldCenterStyle; });
-  // Intestazioni Dettaglio
+ 
   ['A7', 'B7', 'C7'].forEach(cell => { if (ws[cell]) ws[cell].s = boldCenterStyle; });
 
   XLSX.utils.book_append_sheet(wb, ws, 'Report Giornaliero');
@@ -933,7 +936,7 @@ function stampaGiorno(data, giornoData) {
   win.print();
 }
     let dataSelezionata = null;
-    let dataSelezionataStringa = null; // <- nuovo
+    let dataSelezionataStringa = null; 
 
     $(document).ready(function () {
       $('#storicoTable').DataTable({
@@ -973,12 +976,12 @@ function stampaGiorno(data, giornoData) {
           ],
     columnDefs: [
       {
-        targets: 0, // Prima colonna (Data/Ora)
-        width: '150px'  // Imposta la larghezza della colonna
+        targets: 0, 
+        width: '150px'  
       },
       {
-        targets: 1, // Seconda colonna (Evento)
-        width: '250px'  // Imposta la larghezza della colonna
+        targets: 1, 
+        width: '250px' 
       }
         ]
       });
@@ -986,19 +989,19 @@ function stampaGiorno(data, giornoData) {
       caricaStorico();
       setInterval(caricaStorico, 30000);
 
-      // ⏱️ Imposta oggi come data selezionata all'avvio
+     
       dataSelezionata = new Date();
       dataSelezionata.setHours(0, 0, 0, 0);
 
-      // 📅 Formatta per l’input flatpickr
+      
       const oggiStr = dataSelezionata.toISOString().split('T')[0];
       dataSelezionataStringa = oggiStr;
 
-      // Imposta il valore nel campo datepicker
+     
       document.getElementById("dateStart")._flatpickr.setDate(oggiStr);
       document.getElementById("dateEnd")._flatpickr.setDate(oggiStr);
 
-      // Carica il grafico del giorno attuale
+     
       caricaGraficoDaData(dataSelezionata);
 
       
@@ -1011,7 +1014,7 @@ function stampaGiorno(data, giornoData) {
         onChange: function (selectedDates, dateStr) {
           if (selectedDates.length > 0) {
             dataSelezionata = selectedDates[0];
-            dataSelezionataStringa = dateStr;  // <-- la data esatta da usare per stampa
+            dataSelezionataStringa = dateStr; 
             caricaGraficoDaData(dataSelezionata);
           }
         }

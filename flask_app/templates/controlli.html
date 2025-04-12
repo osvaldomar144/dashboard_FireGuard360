@@ -16,7 +16,7 @@
 
       <!-- Nuovo messaggio con la data dell'evento -->
       <div id="dataEvento" class="mt-3 text-muted">
-        <!-- Messaggio di data dell'evento verrà aggiunto dinamicamente -->
+        <!-- Messaggio di data dell'evento che verrà aggiunto dinamicamente -->
       </div>
     </div>
   </div>
@@ -93,7 +93,7 @@
         aggiornaBadge(data.stato);
       });
 
-    // Recupera l'ultimo evento di rischio per mostrare il messaggio
+    // Recupero dell'ultimo evento di rischio per mostrare il messaggio
     fetch('/get_last_risk_event')
       .then(res => res.json())
       .then(data => {
@@ -105,7 +105,7 @@
           rischioElement.classList.remove('alert-primary');
           rischioElement.classList.add(data.rischio === 'Attenzione' ? 'alert-primary' : 'alert-danger');
 
-          // Mostra la data dell'evento
+         
           const eventDate = new Date(data.data_ora);
           dataEventoElement.textContent = `Evento rilevato il: ${eventDate.toLocaleString()}`;
         } else {
@@ -113,7 +113,7 @@
           rischioElement.classList.remove('alert-primary', 'alert-danger');
           rischioElement.classList.add('alert-secondary');
 
-          // Non c'è rischio, quindi non mostrare la data evento
+          
           dataEventoElement.textContent = '';
         }
       });

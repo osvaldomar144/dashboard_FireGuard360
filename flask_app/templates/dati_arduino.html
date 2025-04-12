@@ -93,12 +93,12 @@
       margin: 0;
     }
 
-/* Ingrandire il pulsante "Esporta Dati" */
+
 #dropdownMenuButton {
-  font-size: 0.99rem; /* Aumenta la dimensione del testo */
-  padding: 0.3rem 0.90rem; /* Aumenta il padding per ingrandire il pulsante */
-  height: 38px; /* Aumenta l'altezza */
-  width: auto; /* Imposta la larghezza automatica in base al contenuto */
+  font-size: 0.99rem; 
+  padding: 0.3rem 0.90rem; 
+  height: 38px; 
+  width: auto; 
  
 }
 
@@ -120,7 +120,7 @@
           <!-- Sezione Tabella -->
           <div class="card shadow mb-4">
             <div class="card-header py-3">
-              <h6 class="m-0 font-weight-bold text-primary">📄 Tabella dati registrati</h6>
+              <h6 class="m-0 font-weight-bold text-primary">Tabella Dati Registrati</h6>
             </div>
             <div class="card-body">
               <div class="table-responsive">
@@ -189,7 +189,7 @@
             </div>
           </div>
 
-         <!-- 🧠 Descrizione introduttiva -->
+         
           <div class="mb-2">
             <h6 class="text-primary font-weight-bold">📊 Statistiche Medie nel Periodo</h6>
             <p class="text-muted small mb-2">
@@ -197,7 +197,7 @@
             </p>
           </div>
 
-          <!-- 📅 Filtro intervallo date + bottone -->
+          <!-- Filtro intervallo date + bottone -->
           <div class="row align-items-end mb-4">
             <!-- Campo selezione intervallo -->
             <div class="col-md-4">
@@ -213,45 +213,43 @@
             </div>
           </div>
 
-          <!-- ✅ Testo dinamico con range selezionato -->
+          <!-- Testo dinamico con range selezionato -->
           <p class="small text-muted mb-3" id="intervallo-analizzato" style="display: none;"></p>
-          
-  
-          </div>
-          <div class="card shadow mb-4" id="rangeDataTableCard" style="display: none;">
+         <div class="card shadow mb-4" id="rangeDataTableCard" style="display: none;">
             <div class="card-header py-3">
-              <h6 class="m-0 font-weight-bold text-primary">📄 Dati Medi per Range di Date</h6>
+              <h6 class="m-0 font-weight-bold text-primary">Dati Medi per Range di Date</h6>
             </div>
             <div class="card-body">
               <div class="table-responsive">
                 <table id="dataRangeTable" class="table table-bordered" width="100%" cellspacing="0">
                   <thead>
                     <tr>
-                      <th>Data e Ora</th>
+                      <th>Dat a e Ora</th>
                       <th>Temperatura Media (°C)</th>
                       <th>Umidità Media (%)</th>
                       <th>Fumo Medio (ppm)</th>
                     </tr>
                   </thead>
                   <tbody id="dataRangeTableBody">
-                    <!-- I dati saranno inseriti qui dinamicamente -->
                   </tbody>
                 </table>
               </div>
-              <!-- Colonna per il bottone "Esporta Dati" con una classe personalizzata per il margine -->
-            <div class="col-md-12 d-flex justify-content-end align-items-end px-0" style="margin-top: 0px;">
-              <div class="dropdown">
-                <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                  <i class="fas fa-file-export mr-1"></i> Esporta dati
-                </button>
-                <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                  <button class="dropdown-item dropdown-export-option" data-format="csv">📥 CSV</button>
-                  <button class="dropdown-item dropdown-export-option" data-format="excel">📊 Excel</button>
-                  <button class="dropdown-item dropdown-export-option" data-format="pdf">📄 PDF</button>
-                  <button class="dropdown-item dropdown-export-option" data-format="print">🖨️ Stampa</button>
+          
+              <!-- Bottone Esporta -->
+              <div class="d-flex justify-content-end align-items-end mt-3">
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" id="dropdownMenuButton"
+                    data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                    <i class="fas fa-file-export mr-1"></i> Esporta dati
+                  </button>
+                  <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                    <button class="dropdown-item dropdown-export-option" data-format="csv">📥 CSV</button>
+                    <button class="dropdown-item dropdown-export-option" data-format="excel">📊 Excel</button>
+                    <button class="dropdown-item dropdown-export-option" data-format="pdf">📄 PDF</button>
+                    <button class="dropdown-item dropdown-export-option" data-format="print">🖨️ Stampa</button>
+                  </div>
                 </div>
               </div>
-            </div>
             </div>
           </div>
 
@@ -277,7 +275,7 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.1/xlsx.full.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- Carica il plugin autoTable -->
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.20/jspdf.plugin.autotable.min.js"></script>
 
   
@@ -314,18 +312,18 @@
   order: [[1, 'desc']]
 });
   
-      // ✅ Conversione sicura da Flask a JavaScript
+     
       const labels = JSON.parse('{{ chart_labels | tojson | safe }}');
       const temperatura = JSON.parse('{{ chart_temperatura | tojson | safe }}');
       const fumo = JSON.parse('{{ chart_fumo | tojson | safe }}');
       const umidita = JSON.parse('{{ chart_umidita | tojson | safe }}');
       const fullDates = JSON.parse('{{ full_dates | tojson | safe }}'); 
 
-
+  // Grafico per temperatura
       temperaturaChart = new Chart(document.getElementById('chartTemperatura'), {
     type: 'line',
     data: {
-      labels: labels,  // Le etichette (solo ora e minuti)
+      labels: labels, 
       datasets: [{
         label: 'Temperatura Media',
         data: temperatura,
@@ -345,28 +343,27 @@
       tooltips: {
         enabled: true,
         callbacks: {
-          // Personalizza il titolo della tooltip con la data completa
+         
           title: function(tooltipItem, data) {
             const index = tooltipItem[0].index;
-            // Usa l'array fullDates per la data completa (data + ora)
-            return fullDates[index];  // Restituisce la data completa (esempio: 2025-03-31 14:05)
+            return fullDates[index]; 
           },
-          // Personalizza l'etichetta della tooltip
+         
           label: function(tooltipItem, data) {
             const label = data.datasets[tooltipItem.datasetIndex].label || '';
-            const value = tooltipItem.yLabel.toFixed(2);  // Mostra con 2 decimali
-            return label + ': ' + value + ' °C';  // Mostra "Temperatura: 22.5 °C"
+            const value = tooltipItem.yLabel.toFixed(2);  
+            return label + ': ' + value + ' °C';  
           }
         }
       }
     }
   });
 
-  // Configurazione grafico per Umidità
+  // Grafico per Umidità
   umiditaChart = new Chart(document.getElementById('chartUmidita'), {
     type: 'line',
     data: {
-      labels: labels,  // Le etichette (ora e minuti)
+      labels: labels,  
       datasets: [{
         label: 'Umidità Media',
         data: umidita,
@@ -384,24 +381,23 @@
         callbacks: {
           title: function(tooltipItem, data) {
             const index = tooltipItem[0].index;
-            // Usa l'array fullDates per la data completa (data + ora)
-            return fullDates[index];  // Restituisce la data completa (esempio: 2025-03-31 14:05)
+            return fullDates[index];  
           },
           label: function(tooltipItem, data) {
             const label = data.datasets[tooltipItem.datasetIndex].label || '';
             const value = tooltipItem.yLabel.toFixed(2);
-            return label + ': ' + value + ' %';  // Mostra "Umidità: 45%"
+            return label + ': ' + value + ' %'; 
           }
         }
       }
     }
   });
 
-  // Configurazione grafico per Fumo
+  // CGrafico per Fumo
   fumoChart = new Chart(document.getElementById('chartFumo'), {
     type: 'line',
     data: {
-      labels: labels,  // Le etichette (ora e minuti)
+      labels: labels,  
       datasets: [{
         label: 'Fumo Medio',
         data: fumo,
@@ -419,20 +415,18 @@
         callbacks: {
           title: function(tooltipItem, data) {
             const index = tooltipItem[0].index;
-            // Usa l'array fullDates per la data completa (data + ora)
-            return fullDates[index];  // Restituisce la data completa (esempio: 2025-03-31 14:05)
+            return fullDates[index];  
           },
           label: function(tooltipItem, data) {
             const label = data.datasets[tooltipItem.datasetIndex].label || '';
             const value = tooltipItem.yLabel.toFixed(2);
-            return label + ': ' + value + ' ppm';  // Mostra "Fumo: 0.8 ppm"
+            return label + ': ' + value + ' ppm';  
           }
         }
       }
     }
   });
 });
-    // ✅ Queste funzioni DEVONO essere fuori da $(document).ready()
     function filterChartData() {
   const startDate = document.getElementById('startDate').value;
 
@@ -441,11 +435,10 @@
     return;
   }
 
-  // Fai la richiesta per un solo giorno
+  
   fetch(`/get_data_filter?start_date=${startDate}`)
     .then(res => res.json())
     .then(data => {
-      // Controlla che i dati siano nell'array corretto
       if (Array.isArray(data.chart_labels) && Array.isArray(data.chart_temperatura) && 
           Array.isArray(data.chart_fumo) && Array.isArray(data.chart_umidita)) {
         const labels = data.chart_labels;
@@ -453,14 +446,14 @@
         const umidita = data.chart_umidita;
         const fumo = data.chart_fumo;
 
-        // Aggiorna il titolo del grafico con la data selezionata
+      
         const selectedDate = new Date(startDate);
-        const formattedDate = selectedDate.toLocaleDateString('it-IT'); // Formato: 05/04/2025
+        const formattedDate = selectedDate.toLocaleDateString('it-IT'); // Formato: gg/mm/hhhh
         document.getElementById('chartTitleTemperatura').textContent = `Temperatura - Dati Giornalieri del ${formattedDate}`;
         document.getElementById('chartTitleUmidita').textContent = `Umidità - Dati Giornalieri del ${formattedDate}`;
         document.getElementById('chartTitleFumo').textContent = `Fumo - Dati Giornalieri del ${formattedDate}`;
 
-        // Chiama updateChart per ogni grafico
+       
         updateChart(temperaturaChart, labels, temperatura);
         updateChart(fumoChart, labels, fumo);
         updateChart(umiditaChart, labels, umidita);
@@ -490,30 +483,27 @@ function updateChart(chart, labels, data) {
 
 
 flatpickr("#dateRange", {
-  mode: "range", // Modalità intervallo
-  dateFormat: "Y-m-d", // Formato della data
+  mode: "range", 
+  dateFormat: "Y-m-d", 
   onChange: function(selectedDates) {
-    // Assicurati che siano state selezionate entrambe le date
     if (selectedDates.length === 2) {
-      const startDate = selectedDates[0].toISOString().split("T")[0]; // Data di inizio
-      const endDate = selectedDates[1].toISOString().split("T")[0];   // Data di fine
-      // Attiva il pulsante di filtro solo quando entrambe le date sono selezionate
+      const startDate = selectedDates[0].toLocaleDateString('sv-SE'); 
+      const endDate = selectedDates[1].toISOString().split("T")[0];   
       document.querySelector('.btn.btn-primary').disabled = false;
-      // Salva le date selezionate nel caso il pulsante venga premuto
       window.selectedStartDate = startDate;
       const endDateObj = new Date(selectedDates[1]);
       endDateObj.setHours(23, 59, 59, 999);
-      window.selectedEndDate = endDateObj.toISOString().split("T")[0]; // Formato Y-m-d
-      window.selectedEndDateTime = endDateObj.toISOString(); // Usato nella fetch
+      window.selectedEndDate = endDateObj.toISOString().split("T")[0]; 
+      window.selectedEndDateTime = endDateObj.toISOString(); 
     }
   }
 });
 
 function updateTable(data) {
     const tableBody = document.getElementById('dataRangeTableBody');
-    tableBody.innerHTML = ''; // Pulisce la tabella precedente
+    tableBody.innerHTML = ''; 
 
-    // Aggiungi le righe alla tabella
+  
     data.chart_labels.forEach((label, index) => {
       const row = document.createElement('tr');
       row.innerHTML = `
@@ -525,35 +515,30 @@ function updateTable(data) {
       tableBody.appendChild(row);
     });
 
-    // Mostra la tabella se non è visibile
+   
     document.getElementById('rangeDataTableCard').style.display = 'block';
   }
 
-
-// Funzione che viene chiamata quando il pulsante "Filtra" è cliccato
 function filterDataRange() {
   const startDate = window.selectedStartDate;
   const endDate = window.selectedEndDate;
 
-  // Verifica che le date siano selezionate correttamente
+ 
   if (!startDate || !endDate) {
     alert("Seleziona l'intervallo di date!");
     return;
   }
 
-  // Fai la richiesta al server per ottenere i dati filtrati per l'intervallo di date
+  
   fetch(`/get_data_range?start_date=${startDate} 00:00:00&end_date=${window.selectedEndDate} 23:59:59`)
     .then(res => res.json())
     .then(data => {
-      // Gestisci i dati ricevuti e aggiorna la tabella o i grafici
       console.log(data);
-      // Codice per aggiornare la tabella dei dati medi
-      // Se hai una tabella con i dati medi, aggiorna qui la tabella con i nuovi dati
       updateTable(data);
 
-      // Mostra sotto la dicitura intervallo analizzato
+    
       document.getElementById('intervallo-analizzato').style.display = 'block';
-      document.getElementById('intervallo-analizzato').textContent = `📅 Medie calcolate dal ${startDate} al ${endDate}`;
+      
     })
     .catch(error => {
       console.error("Errore nella richiesta:", error);
@@ -564,13 +549,13 @@ function filterDataRange() {
 document.querySelectorAll('.dropdown-export-option').forEach(button => {
   button.addEventListener('click', function() {
     const format = this.getAttribute('data-format');
-    exportTable(format); // Esporta nel formato selezionato
+    exportTable(format); 
   });
 });
 function exportTable(format) {
     const table = document.getElementById('dataRangeTable');
 
-    // Controlliamo quale formato è stato selezionato
+   
     if (format === 'csv') {
       exportCSV(table);
     } else if (format === 'excel') {
@@ -588,7 +573,7 @@ function exportCSV(table) {
     headers.forEach(header => {
       csv += header.innerText + ',';
     });
-    csv = csv.slice(0, -1) + '\n'; // Rimuove l'ultima virgola e aggiunge una nuova riga
+    csv = csv.slice(0, -1) + '\n'; 
 
     const rows = table.querySelectorAll('tbody tr');
     rows.forEach(row => {
@@ -596,7 +581,7 @@ function exportCSV(table) {
       cells.forEach(cell => {
         csv += cell.innerText + ',';
       });
-      csv = csv.slice(0, -1) + '\n'; // Rimuove l'ultima virgola e aggiunge una nuova riga
+      csv = csv.slice(0, -1) + '\n'; 
     });
 
     const link = document.createElement('a');
@@ -615,11 +600,7 @@ function exportCSV(table) {
 // Funzione per esportare la tabella in formato PDF
 function exportPDF(table) {
   const doc = new jsPDF();
-  
-  // Usa autoTable per aggiungere la tabella
   doc.autoTable({ html: table });
-  
-  // Salva il documento PDF
   doc.save('dati.pdf');
 }
   
@@ -637,7 +618,7 @@ function exportPDF(table) {
   // Funzione principale per gestire l'esportazione
   window.onload = function () {
   const today = new Date();
-  const formattedToday = today.toLocaleDateString('it-IT'); // Formato: 05/04/2025
+  const formattedToday = today.toLocaleDateString('it-IT'); 
   document.getElementById('chartTitleTemperatura').textContent = `Temperatura - Dati Giornalieri del ${formattedToday}`;
   document.getElementById('chartTitleUmidita').textContent = `Umidità - Dati Giornalieri del ${formattedToday}`;
   document.getElementById('chartTitleFumo').textContent = `Fumo - Dati Giornalieri del ${formattedToday}`;

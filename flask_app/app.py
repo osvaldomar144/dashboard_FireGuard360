@@ -18,7 +18,7 @@ app = Flask(__name__)
 def inject_user():
     return dict(username=session.get('username'))
 
-app.secret_key = 'your_secret_key'  # Cambia con una chiave segreta sicura
+app.secret_key = 'your_secret_key'  # Da cambiare con una chiave segreta sicura (opzionale)
 #drone = Tello()
 
 # Variabile per tenere traccia della connessione al drone
@@ -52,7 +52,7 @@ def login():
         cur.close()
         conn.close()
 
-        # Controllo delle credenziali in modo sicuro (con hashing)
+        # Controllo delle credenziali in modo sicuro
         if user and user[2] == password: 
             session['user_id'] = user[0]           # Salva l'ID utente nella sessione
             session['username'] = user[1]          # Salva il nome utente nella sessione
@@ -188,43 +188,40 @@ def get_filtered_data():
     ORDER BY hour;
     """
     
-    # Converti la start_date in un formato "YYYY-MM-DD 00:00:00" per l'inizio della giornata
+    
     start_datetime = f"{start_date} 00:00:00"
-    # Impostiamo la fine del giorno alle 23:59:59
-    end_datetime = f"{start_date} 23:59:59"  # Impostiamo la fine alla fine della giornata
+    end_datetime = f"{start_date} 23:59:59"  
 
-    # Esegui la query con i dati filtrati per il giorno specifico
-    cur.execute(query, (start_datetime, end_datetime))  # Passiamo solo il singolo giorno
-    data = cur.fetchall()  # Ottieni i risultati
+   
+    cur.execute(query, (start_datetime, end_datetime))  
+    data = cur.fetchall() 
 
-    # Definisci il fuso orario locale (ad esempio 'Europe/Rome')
+    #fuso orario locale (ad esempio 'Europe/Rome')
     local_tz = pytz.timezone('Europe/Rome')
 
-    # Crea una lista di tutte le ore della giornata (da 00:00 a 23:00)
+   
     all_hours = [f"{i:02}:00" for i in range(24)]
-
-    # Crea un dizionario con le ore come chiave e i valori come una lista vuota inizialmente
     data_dict = {hour: {'temperatura': None, 'umidita': None, 'fumo': None} for hour in all_hours}
 
-    # Aggiorna i dati solo per le ore presenti
-    for row in data:  # Per ogni riga filtrata
-        hour = row[0]  # La chiave ora è nel formato 'YYYY-MM-DD HH:00:00'
+   
+    for row in data:  
+        hour = row[0]  
         hour_formatted = datetime.strptime(hour, "%Y-%m-%d %H:%M:%S").strftime("%H:%M")  # Converte l'ora al formato "%H:%M"
         data_dict[hour_formatted]['temperatura'] = row[1]
         data_dict[hour_formatted]['umidita'] = row[2]
         data_dict[hour_formatted]['fumo'] = row[3]
 
-    # Ora estrai i dati per popolare i grafici e le etichette
+    
     labels = []
     full_dates = []
     temperatura = []
     fumo = []
     umidita = []
 
-    # Aggiungi tutte le ore da 00:00 a 23:00, anche quelle senza dati
+    
     for hour in all_hours:
-        labels.append(hour)  # Aggiungi l'ora alle etichette
-        full_dates.append(hour)  # Conserva l'ora completa per altre necessità
+        labels.append(hour) 
+        full_dates.append(hour)
         temperatura.append(data_dict[hour]['temperatura'] if data_dict[hour]['temperatura'] is not None else 0)
         umidita.append(data_dict[hour]['umidita'] if data_dict[hour]['umidita'] is not None else 0)
         fumo.append(data_dict[hour]['fumo'] if data_dict[hour]['fumo'] is not None else 0)
@@ -244,13 +241,13 @@ def get_filtered_data():
 
 
 
-#RIVEDERE QUESTO CODICE - forse è meglio separare e fare due app.route differenti per le due query
+#RIVEDERE QUESTO CODICE - forse è meglio separare e fare due app.route differenti per le due query ?
 @app.route('/dati-arduino')
 def dati_arduino():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Query per ottenere la media per ogni ora (dati aggregati)
+    # Query per ottenere la media per ogni ora 
     cur.execute('''
     SELECT
         DATE_FORMAT(data_ora, "%Y-%m-%d %H:00:00") AS hour,
@@ -264,11 +261,11 @@ def dati_arduino():
     ''')
     rows2 = cur.fetchall()
 
-    # Query per ottenere tutti i record (per la tabella)
+    # Query per ottenere tutti i record (per la tabella completa)
     cur.execute('SELECT id, temperatura, umidita, fumo, data_ora FROM dati_arduino ORDER BY data_ora DESC')
     rows = cur.fetchall()
 
-    # Definisci il fuso orario locale (esempio 'Europe/Rome')
+   
     local_tz = pytz.timezone('Europe/Rome')
 
     dati = []
@@ -278,16 +275,15 @@ def dati_arduino():
     fumo = []
     umidita = []
 
-    # Popola i dati per la tabella (gestisce tzinfo)
-    for row in rows[::-1]:  # Inverti per mostrare i dati in ordine cronologico
+   
+    for row in rows[::-1]:  
         data_ora = row[4]
 
-        # Se data_ora è una stringa, convertila in un oggetto datetime
+      
         if isinstance(data_ora, str):
             data_ora = datetime.strptime(data_ora, "%Y-%m-%d %H:%M:%S")
         
         if data_ora.tzinfo is None:
-            # Se non ha il fuso orario, localizza il datetime come UTC
             data_ora = pytz.utc.localize(data_ora)  
 
         # Converte la data_ora al fuso orario locale
@@ -301,26 +297,22 @@ def dati_arduino():
             'data_ora': data_ora_local.strftime("%Y-%m-%d %H:%M:%S")  # Data in formato locale
         })
 
-    # Crea una lista di tutte le ore della giornata (da 00:00 a 23:00)
+   
     all_hours = [f"{i:02}:00" for i in range(24)]
-
-    # Popola i dati per i grafici (ultimi 10, con gestione del fuso orario)
-    # Crea un dizionario con le ore come chiave e i valori come una lista vuota inizialmente
     data_dict = {hour: {'temperatura': None, 'umidita': None, 'fumo': None} for hour in all_hours}
 
-    # Aggiorna i dati solo per le ore presenti
-    for row2 in rows2[::-1]:  # Inverti per grafici in ordine cronologico
+   
+    for row2 in rows2[::-1]:  
         data_ora = row2[0]
         
-        # Se data_ora è una stringa, convertila in un oggetto datetime
+        
         if isinstance(data_ora, str):
             data_ora = datetime.strptime(data_ora, "%Y-%m-%d %H:%M:%S")
 
         if data_ora.tzinfo is None:
-            # Se non ha il fuso orario, localizza il datetime come UTC
             data_ora = pytz.utc.localize(data_ora)
 
-        # Converte la data_ora al fuso orario locale
+      
         data_ora_local = data_ora.astimezone(local_tz)
 
         hour = data_ora_local.strftime("%H:00")
@@ -328,10 +320,10 @@ def dati_arduino():
         data_dict[hour]['umidita'] = row2[2]
         data_dict[hour]['fumo'] = row2[3]
 
-    # Ora estrai i dati per popolare i grafici e le etichette
+   
     for hour in all_hours:
-        labels.append(hour)  # Aggiungi l'ora alle etichette
-        full_dates.append(hour)  # Conserva l'ora completa per altre necessità
+        labels.append(hour)  
+        full_dates.append(hour)  
         temperatura.append(data_dict[hour]['temperatura'] if data_dict[hour]['temperatura'] is not None else 0)
         umidita.append(data_dict[hour]['umidita'] if data_dict[hour]['umidita'] is not None else 0)
         fumo.append(data_dict[hour]['fumo'] if data_dict[hour]['fumo'] is not None else 0)
@@ -355,15 +347,11 @@ def get_data_range():
     start_date = request.args.get('start_date')
     end_date = request.args.get('end_date')
 
-    # Debug: stampa le date ricevute
-    print(f"Start Date: {start_date}")
-    print(f"End Date: {end_date}")
-
-    # Connessione al database per recuperare i dati filtrati per il range di date
+   
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Crea la query per ottenere i dati medi per ogni ora nell'intervallo di date
+    # query per ottenere i dati medi per ogni ora nell'intervallo di date
     query = """
     SELECT
         DATE_FORMAT(data_ora, "%Y-%m-%d %H:00:00") AS hour,
@@ -376,21 +364,21 @@ def get_data_range():
     ORDER BY hour;
     """
     
-    # Esegui la query con i dati filtrati per l'intervallo di date
+   
     cur.execute(query, (start_date, end_date))
     data = cur.fetchall()
 
-    # Processa i dati
+   
     labels = []
     temperatura = []
     umidita = []
     fumo = []
 
     for row in data:
-        labels.append(row[0])  # L'ora
-        temperatura.append(row[1])  # Temperatura media
-        umidita.append(row[2])  # Umidità media
-        fumo.append(row[3])  # Fumo medio
+        labels.append(row[0])  
+        temperatura.append(row[1])  
+        umidita.append(row[2]) 
+        fumo.append(row[3])  
 
     cur.close()
     conn.close()
@@ -403,25 +391,17 @@ def get_data_range():
     })
 @app.route('/controlli')
 def controlli():
-    # Percorso del modello .obj
-    model_filename = 'Modern cottage_01_OBJ.obj'  # Assicurati che il nome del file sia corretto
-    model_path = url_for('static', filename=f'models/{model_filename}')
-    
-    # Passa il percorso del modello al template
-    return render_template('controlli.html', model_path=model_path)
+    return render_template('controlli.html')
 
 @app.route('/controllo/rele/<stato>', methods=['POST'])
 def controllo_rele(stato):
-    # Logica reale qui
+   #VALORI FITTIZI -> verranno presi direttamente dal db 
     if stato == 'on':
-        # Attiva relè fisicamente
         stato_attuale = 'on'
     elif stato == 'off':
-        # Disattiva relè fisicamente
         stato_attuale = 'off'
     elif stato == 'stato':
-        # Recupera stato attuale reale o simulato
-        stato_attuale = 'off'  # oppure valore da variabile/DB
+        stato_attuale = 'off'  
     else:
         stato_attuale = 'errore'
 
@@ -434,7 +414,7 @@ def get_last_risk_event():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Ottieni l'ultimo evento di rischio
+   
     cur.execute('SELECT evento, data_ora FROM eventi WHERE evento LIKE "Pericolo%" OR evento LIKE "Attenzione%" ORDER BY data_ora DESC LIMIT 1')
     row = cur.fetchone()
     
@@ -442,27 +422,22 @@ def get_last_risk_event():
     conn.close()
 
     if row:
-        # Recupera la data dell'evento
+       
         event_date = row[1]
 
-        # Verifica se event_date è già un oggetto datetime
+       
         if isinstance(event_date, datetime):
             event_time = event_date
         else:
-            # Se per qualche motivo event_date non è già un datetime, usiamo strptime
             event_time = datetime.strptime(event_date, "%Y-%m-%d %H:%M:%S")
 
-        # Confronta la data dell'evento con il momento attuale
         now = datetime.now()
         time_diff = now - event_time
-
-        # Se l'evento è nelle ultime 24 ore, invia l'evento, altrimenti invia un valore None
         if time_diff <= timedelta(days=1):
-            # Formatta la data dell'evento come stringa per la risposta JSON
             event_date_str = event_time.strftime("%Y-%m-%d %H:%M:%S")
             return jsonify({
                 'rischio': row[0],
-                'data_ora': event_date_str  # Rispondi con la data formattata come stringa
+                'data_ora': event_date_str 
             })
         else:
             return jsonify({'rischio': None, 'data_ora': None})
@@ -475,7 +450,7 @@ def get_hotspot_status():
     conn = get_db_connection()
     cur = conn.cursor()
 
-    # Esegui la query per ottenere i valori degli hotspot
+
     cur.execute('SELECT arduino1, arduino2, arduino3, arduino4 FROM dispositivi LIMIT 1')
     row = cur.fetchone()
 
@@ -484,10 +459,10 @@ def get_hotspot_status():
 
     if row:
         return jsonify({
-            'arduino1': row[0],  # stato del primo dispositivo
-            'arduino2': row[1],  # stato del secondo dispositivo
-            'arduino3': row[2],  # stato del terzo dispositivo
-            'arduino4': row[3]   # stato del quarto dispositivo
+            'arduino1': row[0],  
+            'arduino2': row[1],  
+            'arduino3': row[2], 
+            'arduino4': row[3]  
         })
     else:
         return jsonify({
@@ -598,18 +573,17 @@ def profilo():
         nuova_password = request.form['password']
         avatar = request.files.get('avatar')
 
-        # Gestisci la password
+    
         if nuova_password:
-            # Usa un hash per la password (es. werkzeug.security)
-            hashed_password = generate_password_hash(nuova_password)  # Usa questa funzione se stai usando werkzeug
+            hashed_password = generate_password_hash(nuova_password)  
             cur.execute('UPDATE utenti SET username = %s, password_hash = %s WHERE id = %s',
                         (nuovo_username, hashed_password, user_id))
         else:
             cur.execute('UPDATE utenti SET username = %s WHERE id = %s', (nuovo_username, user_id))
 
-        # Gestisci l'avatar
+       
         if avatar:
-            # Salva l'avatar nella cartella uploads
+         
             avatar_filename = f"{nuovo_username}.jpg"
             avatar.save(f"static/uploads/{avatar_filename}")
         
@@ -634,8 +608,7 @@ def aggiorna_profilo():
     nuovo_username = request.form['username']
     file = request.files.get('avatar')
 
-    # aggiorna il nome utente nel DB (implementa tu)
-    # salva immagine profilo se presente
+  
     if file:
         file.save(f"static/uploads/{nuovo_username}.jpg")
 

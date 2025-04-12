@@ -12,7 +12,7 @@ const onProgress = (event) => {
 };
 document.querySelector('model-viewer').addEventListener('progress', onProgress);
 
-// Esegui una richiesta per ottenere i dati degli hotspot dal server
+// Esegue una richiesta per ottenere i dati degli hotspot dal server
 fetch('/get_hotspot_status')
   .then(response => response.json())
   .then(data => {
@@ -71,7 +71,7 @@ fetch('/get_hotspot_status')
     }
   })
   .catch(error => console.error('Errore nel recupero dei dati:', error));
-// Aggiungi l'evento di clic sugli hotspot per toggle la visibilità delle etichette e il contorno azzurro
+// Aggiunge l'evento di clic sugli hotspot per toggle la visibilità delle etichette e il contorno azzurro
 document.querySelectorAll('.Hotspot').forEach(hotspot => {
   hotspot.addEventListener('click', () => {
     const isSelected = hotspot.classList.contains('selected');
@@ -83,7 +83,7 @@ document.querySelectorAll('.Hotspot').forEach(hotspot => {
     if (!isSelected) {
       hotspot.classList.add('visible', 'selected', 'animate-in');
 
-      // Rimuovi 'animate-in' dopo un tick così la transizione in uscita funziona
+      // Rimuove 'animate-in' dopo un tick così la transizione in uscita funziona
       setTimeout(() => {
         hotspot.classList.remove('animate-in');
       }, 10);
