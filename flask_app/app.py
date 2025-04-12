@@ -11,11 +11,6 @@ import pytz
 from datetime import datetime
 
 app = Flask(__name__)
-<<<<<<< HEAD
-app.secret_key = 'your_secret_key'  # Cambia con una chiave segreta sicura
-<<<<<<< HEAD
-=======
-=======
 
 
 
@@ -24,12 +19,10 @@ def inject_user():
     return dict(username=session.get('username'))
 
 app.secret_key = 'your_secret_key'  # Da cambiare con una chiave segreta sicura (opzionale)
->>>>>>> local
 #drone = Tello()
 
 # Variabile per tenere traccia della connessione al drone
 #drone_connected = False
->>>>>>> local
 
 # Funzione per connettersi a MySQL
 def get_db_connection():
@@ -53,11 +46,7 @@ def login():
         cur = conn.cursor()
 
         # Recupera l'utenza dal database
-<<<<<<< HEAD
-        cur.execute('SELECT id, username, password_hash sword FROM utenti WHERE username = %s;', (username,))
-=======
         cur.execute('SELECT id, username, password_hash FROM utenti WHERE username = %s;', (username,))
->>>>>>> local
         user = cur.fetchone()
 
         cur.close()
@@ -75,34 +64,12 @@ def login():
 
 @app.route('/')
 def index():
-<<<<<<< HEAD
-    if 'user_id' not in session:  # Verifica se l'utente è loggato
-        return redirect(url_for('login'))  # Reindirizza al login se non loggato
-
-    # Connessione al database per recuperare i dati Arduino
-=======
     if 'user_id' not in session:
         return redirect(url_for('login'))
 
->>>>>>> local
     conn = get_db_connection()
     cur = conn.cursor()
-    cur.execute('SELECT * FROM dati_arduino ORDER BY id DESC LIMIT 1;')  # Prendi solo l'ultimo record
-    dati = cur.fetchall()
 
-<<<<<<< HEAD
-    cur.close()
-    conn.close()
-
-    # Passa i dati e il nome utente al template
-    return render_template('index.html', dati=dati, username=session.get('username'))
-
-@app.route('/logout')
-def logout():
-    session.pop('user_id', None)     # Rimuove user_id
-    session.pop('username', None)    # Rimuove username
-    return redirect(url_for('login'))  # Torna al login
-=======
     cur.execute('SELECT temperatura, umidita, fumo FROM dati_arduino ORDER BY data_ora DESC LIMIT 1')
     row = cur.fetchone()
 
@@ -655,7 +622,6 @@ def logout():
     session.pop('user_id', None)
     session.pop('username', None)
     return redirect(url_for('login'))
->>>>>>> local
 
 
 @app.context_processor
