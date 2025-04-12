@@ -468,6 +468,36 @@ def get_last_risk_event():
             return jsonify({'rischio': None, 'data_ora': None})
     else:
         return jsonify({'rischio': None, 'data_ora': None})
+    
+
+@app.route('/get_hotspot_status', methods=['GET'])
+def get_hotspot_status():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Esegui la query per ottenere i valori degli hotspot
+    cur.execute('SELECT arduino1, arduino2, arduino3, arduino4 FROM dispositivi LIMIT 1')
+    row = cur.fetchone()
+
+    cur.close()
+    conn.close()
+
+    if row:
+        return jsonify({
+            'arduino1': row[0],  # stato del primo dispositivo
+            'arduino2': row[1],  # stato del secondo dispositivo
+            'arduino3': row[2],  # stato del terzo dispositivo
+            'arduino4': row[3]   # stato del quarto dispositivo
+        })
+    else:
+        return jsonify({
+            'arduino1': 0, 
+            'arduino2': 0, 
+            'arduino3': 0, 
+            'arduino4': 0
+        })
+
+
 @app.route('/allarmi')
 def allarmi():
     return render_template('allarmi.html', username=session.get('username'))
@@ -481,10 +511,11 @@ def get_allarmi_storico():
     cur = conn.cursor(dictionary=True)
 
     query = """
-        SELECT data_ora, evento 
-        FROM eventi 
-        WHERE (evento LIKE '%attenzione%' OR evento LIKE '%pericolo%')
-    """
+    SELECT data_ora, evento, livello
+    FROM eventi
+    WHERE livello IS NOT NULL AND livello != '-'
+    
+"""
     params = []
 
     if data_da and data_a:

@@ -70,6 +70,96 @@
 .dropdown-menu {
       min-width: 160px;
     }
+
+    /* Badge colorati per livello di rischio */
+    .badge-danger {
+  background-color: #f8394c; /* Rosso per emergenza */
+  color: #761a1a; /* Un rosso più scuro per il testo */
+  font-weight: bold;
+}
+
+/* Badge arancione (Pericolo) */
+.badge-warning {
+  background-color: #f0a730; /* Arancione per pericolo */
+  color: #8c5103; /* Un arancione più scuro per il testo */
+  font-weight: bold;
+}
+
+.badge-attention {
+  background-color: #fbe178; /* Giallo per attenzione */
+  color: #856404;
+  font-weight: bold;
+}
+
+/* Impostazioni della lista della legenda */
+.legend {
+  margin-top: -20px; /* Riduce lo spazio sopra la legenda */
+  font-size: 0.9rem;
+}
+
+.legend ul {
+  padding-left: 0; /* Rimuovere il padding */
+  margin: 0; /* Rimuovere il margine */
+  list-style-type: none; /* Rimuovere i punti elenco */
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.legend-color {
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  display: inline-block;
+}
+
+.badge-danger {
+  background-color: #f8394c; /* Rosso per Emergenza */
+}
+
+.badge-warning {
+  background-color: #f0a730; /* Arancione per Pericolo */
+}
+
+.badge-attention {
+  background-color: #fbe178; /* Giallo per Attenzione */
+}
+
+/* Colori specifici per i badge */
+.badge-danger { background-color: #f8394c; }  /* Rosso per Emergenza */
+.badge-warning { background-color: #f0a730; }  /* Arancione per Pericolo */
+.badge-attention { background-color: #fbe178; }  /* Giallo per Attenzione */
+
+
+
+/* Allineamento della scritta "Showing" e dei tasti "Previous" / "Next" */
+.dataTables_info {
+  display: inline-block;
+  font-size: 0.9rem;
+  margin-right: 15px; /* Distanza tra "Showing" e i tasti */
+  margin-bottom: 10px; /* Spazio tra la scritta "Showing" e la parte inferiore della tabella */
+}
+
+/* Posizionamento dei tasti "Previous" e "Next" alla fine della tabella */
+.dataTables_paginate {
+  float: right; /* Sposta i tasti verso la destra */
+  margin-top: 10px; /* Distanza tra la tabella e i tasti */
+}
+
+/* Riduce lo spazio tra i pulsanti della paginazione */
+.dataTables_paginate .paginate_button {
+  margin-right: 0 !important;
+  margin-left: 0 !important;
+  border-radius: 6px;
+}
+
+/* Rimuove spazio extra generato da DataTables */
+.dataTables_paginate .paginate_button + .paginate_button {
+  margin-left: -1px !important;
+}
   </style>
 </head>
 
@@ -88,11 +178,11 @@
             </div>
   
             <div class="d-flex justify-content-between align-items-center mb-3">
-              <p class="mb-0 text-muted" id="totale-eventi">Totale eventi registrati: 0</p>
+              <p class="mb-0 text-muted" id="totale-eventi">Totale rischi registrati: 0</p>
               <div class="d-flex align-items-center">
-                <button class="btn btn-outline-warning btn-sm mr-2" onclick="filtraPerTipo('attenzione')">Allarmi</button>
+               <!--  <button class="btn btn-outline-warning btn-sm mr-2" onclick="filtraPerTipo('attenzione')">Allarmi</button>
                 <button class="btn btn-outline-danger btn-sm mr-2" onclick="filtraPerTipo('pericolo')">Pericoli</button>
-                <button class="btn btn-outline-primary btn-sm mr-2" onclick="caricaStorico()">Tutti</button>
+                <button class="btn btn-outline-primary btn-sm mr-2" onclick="caricaStorico()">Tutti</button> -->
                 <button class="btn btn-sm btn-outline-secondary" onclick="caricaStorico()">
                   <i class="fas fa-sync-alt mr-1"></i> Aggiorna
                 </button>
@@ -101,7 +191,7 @@
   
             <div class="card shadow mb-4">
               <div class="card-header py-3">
-                <h6 class="m-0 font-weight-bold text-primary">Eventi di Allarme e Pericolo Rilevati</h6>
+                <h6 class="m-0 font-weight-bold text-primary">Anomalie Rilevate</h6>
               </div>
               <div class="card-body">
                 <div class="table-responsive">
@@ -115,32 +205,59 @@
                     <tbody></tbody>
                   </table>
                 </div>
-              </div>
-            </div>
-  
-            <div class="card shadow mb-4">
-              <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap">
-                <h6 class="m-0 font-weight-bold text-primary">📊 Andamento Giornaliero Allarmi e Pericoli</h6>
-                <div class="d-flex align-items-center">
-                  <label for="datepicker" class="mb-0 mr-2 small text-muted">📅 Seleziona giorno:</label>
-                  <input id="datepicker" type="text" class="form-control form-control-sm" size="24" style="width: auto;">
-                  <div class="dropdown ml-2">
-                    <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
-                      <i class="fas fa-file-export mr-1"></i> Esporta dati settimanali
-                    </button>
-                    <div class="dropdown-menu">
-                      <button class="dropdown-item dropdown-export-option" data-format="csv">📥 CSV</button>
-                      <button class="dropdown-item dropdown-export-option" data-format="excel">📊 Excel</button>
-                      <button class="dropdown-item dropdown-export-option" data-format="pdf">📄 PDF</button>
-                      <button class="dropdown-item dropdown-export-option" data-format="print">🖨️ Stampa</button>
-                    </div>
+            
+                <!-- Contenitore per legenda sotto la tabella -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                  <!-- Legenda dei livelli di rischio -->
+                  <div class="legend">
+                    <ul>
+                      <li>
+                        <span class="legend-color badge-danger"></span> 
+                        <strong>Emergenza</strong>: Livello di rischio alto.
+                      </li>
+                      <li>
+                        <span class="legend-color badge-warning"></span> 
+                        <strong>Pericolo</strong>: Livello di rischio moderato.
+                      </li>
+                      <li>
+                        <span class="legend-color badge-attention"></span> 
+                        <strong>Attenzione</strong>: Livello di rischio basso.
+                      </li>
+                    </ul>
                   </div>
                 </div>
               </div>
+            </div>
+  
+            <div class="card-header py-3 d-flex justify-content-between align-items-center flex-wrap">
+              <h6 class="m-0 font-weight-bold text-primary">📊 Andamento Giornaliero Anomalie</h6>
+              <div class="form-inline flex-wrap">
+                <label for="dateStart" class="mb-0 mr-2 small text-muted">🗓️ Intervallo:</label>
+                <input id="dateStart" type="text" placeholder="Da" class="form-control form-control-sm custom-datepicker mr-2" style="width: auto;">
+                <input id="dateEnd" type="text" placeholder="A" class="form-control form-control-sm custom-datepicker mr-3" style="width: auto;">
+            
+                <button class="btn btn-sm btn-outline-primary mr-2" id="btnGeneraReport">
+                  <i class="fas fa-chart-line mr-1"></i> Genera Report
+                </button>
+            
+                <div class="dropdown">
+                  <button class="btn btn-outline-secondary btn-sm dropdown-toggle" type="button" data-toggle="dropdown">
+                    <i class="fas fa-file-export mr-1"></i> Esporta dati
+                  </button>
+                  <div class="dropdown-menu">
+                    <button class="dropdown-item dropdown-export-range" data-format="csv">📅 CSV</button>
+                    <button class="dropdown-item dropdown-export-range" data-format="excel">📈 Excel</button>
+                    <button class="dropdown-item dropdown-export-range" data-format="pdf">📄 PDF</button>
+                    <button class="dropdown-item dropdown-export-range" data-format="print">🖨️ Stampa</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
               <div class="card-body">
-                <p class="text-muted small mb-2" id="intervallo-grafico">📅 Showing events from -- to --</p>
+                <!-- <p class="text-muted small mb-2" id="intervallo-grafico">📅 Showing events from -- to --</p> -->
                 <canvas id="graficoEventi" height="130"></canvas>
-                <p class="mt-3 text-muted" id="stat-giorno-max">Day with most events: --</p>
+                <p class="mt-3 text-muted" id="stat-giorno-max">🕒 Fascia oraria con più eventi: --</p>
               </div>
             </div>
           </div>
@@ -164,87 +281,383 @@
   <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.1/dist/umd/popper.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/js/bootstrap.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
   <script>
-    let chartAllarmi = null;
 
-    function aggiornaGraficoEventi(data, startDate) {
-  const giorniSettimana = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-  const nomiCompleti = {
-    'Sun': 'Sunday', 'Mon': 'Monday', 'Tue': 'Tuesday',
-    'Wed': 'Wednesday', 'Thu': 'Thursday',
-    'Fri': 'Friday', 'Sat': 'Saturday'
+function esportaTabellaPDFConBadge(data) {
+  const badgeColori = {
+    emergency: '#f8394c',
+    danger: '#f0a730',
+    warning: '#fbe178'
   };
 
-  const perGiorno = {};
-  const labels = [];
-  const shortLabels = [];
+  const badgeLabel = {
+    emergency: 'Emergenza',
+    danger: 'Pericolo',
+    warning: 'Attenzione'
+  };
 
-  for (let i = 0; i < 7; i++) {
-    const giorno = new Date(startDate);
-    giorno.setDate(giorno.getDate() + i);
-    const key = giorno.getFullYear() + "-" + String(giorno.getMonth() + 1).padStart(2, '0') + "-" + String(giorno.getDate()).padStart(2, '0');
-    perGiorno[key] = { attenzione: 0, pericolo: 0 };
-    labels.push(key);
-    shortLabels.push(giorniSettimana[giorno.getDay()]);
-  }
+  const bodyTabella = [
+    [
+      { text: 'Data/Ora', style: 'tableHeader' },
+      { text: 'Evento', style: 'tableHeader' },
+      { text: 'Livello', style: 'tableHeader' }
+    ]
+  ];
 
   data.forEach(ev => {
-    const evDate = new Date(ev.data_ora);
-    const key = evDate.getFullYear() + "-" + String(evDate.getMonth() + 1).padStart(2, '0') + "-" + String(evDate.getDate()).padStart(2, '0');
-    if (perGiorno[key]) {
-      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
-      perGiorno[key][tipo]++;
+    const livello = ev.livello?.toLowerCase();
+    if (!['emergency', 'danger', 'warning'].includes(livello)) return;
+
+    const dataOra = new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+
+    bodyTabella.push([
+      dataOra,
+      ev.evento,
+      {
+        text: badgeLabel[livello],
+        fillColor: badgeColori[livello],
+        color: '#000',
+        bold: true,
+        alignment: 'center',
+        margin: [0, 2, 0, 2]
+      }
+    ]);
+  });
+
+  const legenda = [
+    {
+      columns: [
+        { text: 'Legenda livelli di rischio:', bold: true, margin: [0, 10, 0, 4] }
+      ]
+    },
+    {
+      columns: [
+        { width: 12, canvas: [{ type: 'rect', x: 0, y: 0, w: 12, h: 12, color: '#f8394c' }] },
+        { text: '  Emergenza (rischio alto)', margin: [4, 0, 0, 4] }
+      ]
+    },
+    {
+      columns: [
+        { width: 12, canvas: [{ type: 'rect', x: 0, y: 0, w: 12, h: 12, color: '#f0a730' }] },
+        { text: '  Pericolo (rischio medio)', margin: [4, 0, 0, 4] }
+      ]
+    },
+    {
+      columns: [
+        { width: 12, canvas: [{ type: 'rect', x: 0, y: 0, w: 12, h: 12, color: '#fbe178' }] },
+        { text: '  Attenzione (rischio basso)', margin: [4, 0, 0, 4] }
+      ]
+    }
+  ];
+
+  const docDefinition = {
+    content: [
+      { text: 'Report Anomalie Rilevate', style: 'header' },
+      {
+        table: {
+          headerRows: 1,
+          widths: ['30%', '*', '20%'],
+          body: bodyTabella
+        },
+        layout: 'lightHorizontalLines',
+        margin: [0, 10, 0, 20]
+      },
+      ...legenda
+    ],
+    styles: {
+      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
+      tableHeader: { bold: true, fontSize: 12, color: 'black' }
+    },
+    pageMargins: [30, 30, 30, 30]
+  };
+
+  pdfMake.createPdf(docDefinition).download("report_anomalie.pdf");
+}
+
+
+function stampaTabellaConBadge(data) {
+  const badgeHTML = {
+    emergency: '<span style="background:#f8394c;color:#000;font-weight:bold;padding:2px 6px;border-radius:4px;">Emergenza</span>',
+    danger: '<span style="background:#f0a730;color:#000;font-weight:bold;padding:2px 6px;border-radius:4px;">Pericolo</span>',
+    warning: '<span style="background:#fbe178;color:#000;font-weight:bold;padding:2px 6px;border-radius:4px;">Attenzione</span>'
+  };
+
+  const righe = data.map(ev => {
+    const livello = ev.livello?.toLowerCase();
+    if (!badgeHTML[livello]) return '';
+    const dataOra = new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+
+    return `<tr>
+      <td>${dataOra}</td>
+      <td>${ev.evento}</td>
+      <td>${badgeHTML[livello]}</td>
+    </tr>`;
+  }).join('');
+
+  const html = `
+    <h3>📋 Report Anomalie Rilevate</h3>
+    <table border="1" cellspacing="0" cellpadding="6" style="width:100%; font-family:sans-serif;">
+      <thead>
+        <tr>
+          <th>Data/Ora</th>
+          <th>Evento</th>
+          <th>Livello</th>
+        </tr>
+      </thead>
+      <tbody>${righe}</tbody>
+    </table>
+    <br>
+    <div>
+      <strong>Legenda:</strong><br>
+      <div><span style="display:inline-block;width:14px;height:14px;background:#f8394c;"></span> Emergenza</div>
+      <div><span style="display:inline-block;width:14px;height:14px;background:#f0a730;"></span> Pericolo</div>
+      <div><span style="display:inline-block;width:14px;height:14px;background:#fbe178;"></span> Attenzione</div>
+    </div>`;
+
+  const win = window.open('', '', 'width=900,height=700');
+  win.document.write(`<!DOCTYPE html><html><head><title>Stampa</title></head><body>${html}</body></html>`);
+  win.document.close();
+  win.print();
+}
+
+function esportaCSVConBadge(data) {
+  const badgeMap = {
+    emergency: '🟥 Emergenza',
+    danger: '🟧 Pericolo',
+    warning: '🟨 Attenzione'
+  };
+
+  let csv = 'Data/Ora;Evento;Livello\n';
+
+  data.forEach(ev => {
+    const livello = ev.livello?.toLowerCase();
+    if (!badgeMap[livello]) return;
+    const dataOra = new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+    csv += `"${dataOra}";"${ev.evento}";"${badgeMap[livello]}"\n`;
+  });
+
+  csv += `\nLegenda:\n🟥 Emergenza: Livello di rischio alto\n🟧 Pericolo: Livello di rischio medio\n🟨 Attenzione: Livello di rischio basso`;
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `report_anomalie.csv`;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+function esportaExcelConBadge(data) {
+  const badgeMap = {
+    emergency: '🟥 Emergenza',
+    danger: '🟧 Pericolo',
+    warning: '🟨 Attenzione'
+  };
+
+  const dettagliHeader = ['Data/Ora', 'Evento', 'Livello'];
+  const dettagliRows = data
+    .filter(ev => badgeMap[ev.livello?.toLowerCase()])
+    .map(ev => [
+      new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),
+      ev.evento,
+      badgeMap[ev.livello.toLowerCase()]
+    ]);
+
+  const legenda = [
+    [],
+    ['Legenda'],
+    ['🟥 Emergenza', 'Livello di rischio alto'],
+    ['🟧 Pericolo', 'Livello di rischio medio'],
+    ['🟨 Attenzione', 'Livello di rischio basso']
+  ];
+
+  const allRows = [dettagliHeader, ...dettagliRows, ...legenda];
+
+  const ws = XLSX.utils.aoa_to_sheet(allRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Report Anomalie');
+  XLSX.writeFile(wb, 'report_anomalie.xlsx');
+}
+
+
+
+
+flatpickr("#dateStart", {
+  dateFormat: "Y-m-d",
+  maxDate: "today"
+});
+flatpickr("#dateEnd", {
+  dateFormat: "Y-m-d",
+  maxDate: "today"
+});
+
+let datiFiltratiIntervallo = [];
+
+document.getElementById("btnGeneraReport").addEventListener("click", function () {
+  const start = document.getElementById("dateStart").value;
+  const end = document.getElementById("dateEnd").value;
+
+  if (!start || !end) {
+    alert("Seleziona entrambe le date per generare un report.");
+    return;
+  }
+
+  const startDate = new Date(start + 'T00:00:00');
+  const endDate = new Date(end + 'T23:59:59');
+
+  fetch(`/get_allarmi_storico?da=${start}&a=${end}`)
+    .then(res => res.json())
+    .then(data => {
+      datiFiltratiIntervallo = data;
+      aggiornaGraficoGiornaliero(data, `${start} → ${end}`);
+    });
+});
+
+document.querySelectorAll(".dropdown-export-range").forEach(btn => {
+  btn.addEventListener("click", function () {
+    const formato = this.getAttribute("data-format");
+    const start = document.getElementById("dateStart").value;
+    const end = document.getElementById("dateEnd").value;
+
+    if (!start || !end) {
+      alert("Seleziona prima un intervallo valido.");
+      return;
+    }
+
+    fetch(`/get_allarmi_storico?da=${start}&a=${end}`)
+      .then(res => res.json())
+      .then(data => {
+        const rangeLabel = `${start}_to_${end}`;
+
+        if (formato === 'csv') esportaGiornoCSV(data, rangeLabel);
+        else if (formato === 'excel') esportaGiornoExcel(data, rangeLabel);
+        else if (formato === 'pdf') esportaGiornoPDF(data, rangeLabel);
+        else if (formato === 'print') stampaGiorno(data, rangeLabel);
+      });
+  });
+});
+
+
+  let conteggioTotaleGiornaliero = {
+  attenzione: 0,
+  pericolo: 0,
+  emergenza: 0
+};
+  let chartAllarmi = null;
+
+  function aggiornaGraficoGiornaliero(data, giornoSelezionato) {
+  const perOra = {};
+
+  // Inizializza tutte le 24 ore
+  for (let i = 0; i < 24; i++) {
+    const ora = String(i).padStart(2, '0') + ":00";
+    perOra[ora] = { attenzione: 0, pericolo: 0, emergenza: 0 };
+  }
+
+  // Usa orario UTC + 2 per correggere il fuso
+  data.forEach(ev => {
+    const d = new Date(ev.data_ora);
+    let ora = d.getUTCHours();
+    if (ora >= 24) ora -= 24;
+    const oraLabel = String(ora).padStart(2, '0') + ":00";
+
+    if (perOra[oraLabel]) {
+      const livello = ev.livello?.toLowerCase();
+      if (livello === 'warning') perOra[oraLabel].attenzione++;
+      else if (livello === 'danger') perOra[oraLabel].pericolo++;
+      else if (livello === 'emergency') perOra[oraLabel].emergenza++;
     }
   });
 
-  const datiAttenzione = labels.map(d => perGiorno[d].attenzione);
-  const datiPericolo = labels.map(d => perGiorno[d].pericolo);
+  const labels = Object.keys(perOra);
+  const datiAttenzione = labels.map(ora => perOra[ora].attenzione);
+  const datiPericolo = labels.map(ora => perOra[ora].pericolo);
+  const datiEmergenza = labels.map(ora => perOra[ora].emergenza);
 
-  const giornoTopIndex = datiAttenzione.map((val, i) => val + datiPericolo[i])
-    .reduce((maxIdx, val, idx, arr) => val > arr[maxIdx] ? idx : maxIdx, 0);
+  let maxTotale = 0;
+let oraTop = '--';
 
-  const giornoTop = shortLabels[giornoTopIndex];
-  const giornoTopData = labels[giornoTopIndex];
+labels.forEach((ora, i) => {
+  const totale = (datiAttenzione[i] || 0) + (datiPericolo[i] || 0) + (datiEmergenza[i] || 0);
+  if (totale > maxTotale) {
+    maxTotale = totale;
+    oraTop = ora;
+  }
+});
 
-  document.getElementById('stat-giorno-max').textContent =
-    `Day with most events: ${giornoTop} (${giornoTopData})`;
+// Calcolo aggregato globale
+const totaleAttenzione = datiAttenzione.reduce((a, b) => a + b, 0);
+const totalePericolo = datiPericolo.reduce((a, b) => a + b, 0);
+const totaleEmergenza = datiEmergenza.reduce((a, b) => a + b, 0);
+
+conteggioTotaleGiornaliero = {
+  attenzione: totaleAttenzione,
+  pericolo: totalePericolo,
+  emergenza: totaleEmergenza
+};
+
+document.getElementById('stat-giorno-max').textContent =
+`🕒 Fascia oraria con più eventi ${giornoSelezionato ? `(${giornoSelezionato})` : ''}: ${oraTop} (Totale: ${maxTotale})`;
 
   const ctx = document.getElementById('graficoEventi').getContext('2d');
   if (chartAllarmi) {
-    chartAllarmi.data.labels = shortLabels;
+    chartAllarmi.data.labels = labels;
     chartAllarmi.data.datasets[0].data = datiAttenzione;
     chartAllarmi.data.datasets[1].data = datiPericolo;
+    chartAllarmi.data.datasets[2].data = datiEmergenza;
     chartAllarmi.update();
   } else {
     chartAllarmi = new Chart(ctx, {
       type: 'bar',
       data: {
-        labels: shortLabels,
+        labels: labels,
         datasets: [
           {
-            label: 'Allarmi',
+            label: 'Attenzione',
             data: datiAttenzione,
-            backgroundColor: '#0d6efd',
-            barThickness: 12
+            backgroundColor: '#fbe178',
+            barThickness: 10
           },
           {
-            label: 'Pericoli',
+            label: 'Pericolo',
             data: datiPericolo,
-            backgroundColor: '#5a9bd5',
-            barThickness: 12
+            backgroundColor: '#f0a730',
+            barThickness: 10
+          },
+          {
+            label: 'Emergenza',
+            data: datiEmergenza,
+            backgroundColor: '#f8394c',
+            barThickness: 10
           }
         ]
       },
       options: {
-        indexAxis: 'y',
         responsive: true,
         plugins: {
           legend: { position: 'top' },
           tooltip: { mode: 'index', intersect: false }
         },
         scales: {
-          x: { beginAtZero: true }
+          x: {
+            title: {
+              display: true,
+              text: 'Ore del giorno'
+            },
+            ticks: {
+              autoSkip: false,
+              maxRotation: 90,
+              minRotation: 45
+            }
+          },
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            }
+          }
         }
       }
     });
@@ -252,45 +665,70 @@
 }
 
 
-function caricaGraficoDaData(dataInizio) {
-  const start = new Date(dataInizio);
-  start.setHours(0, 0, 0, 0);
+function caricaGraficoDaData(dataGiorno) {
+  const giorno = new Date(dataGiorno);
+  giorno.setHours(0, 0, 0, 0);
 
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  end.setHours(23, 59, 59, 999);
+  const format = d => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const g = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${g}`;
+  };
 
-  const format = d => d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-  document.getElementById("intervallo-grafico").textContent =
-    `📅 Showing events from ${format(start)} to ${format(end)}`;
+  const giornoStr = format(giorno);
+  /* document.getElementById("intervallo-grafico").textContent =
+    `📅 Showing events for ${giornoStr}`; */
 
+  fetch(`/get_allarmi_storico?da=${giornoStr}&a=${giornoStr}`)
+    .then(res => res.json())
+    .then(data => {
+      const giornoStr = giorno.toISOString().split('T')[0];
+      aggiornaGraficoGiornaliero(data, giornoStr);
+    });
+}
+
+
+function caricaStorico() {
   fetch('/get_allarmi_storico')
     .then(res => res.json())
     .then(data => {
-      const filtrati = data.filter(ev => {
-        const d = new Date(ev.data_ora);
-        return d >= start && d <= end;
-      });
-      aggiornaGraficoEventi(filtrati, start); // 👉 passa la data iniziale
-    });
-}
-    function caricaStorico() {
-      fetch('/get_allarmi_storico')
-        .then(res => res.json())
-        .then(data => {
-          document.getElementById('totale-eventi').textContent = `Totale eventi registrati: ${data.length}`;
-          const table = $('#storicoTable').DataTable();
-          table.clear();
-          data.forEach(ev => {
-            const eventoLower = ev.evento.toLowerCase();
-            let badgeClass = eventoLower.includes('pericolo') ? 'badge-danger' : 'badge-warning';
-            const badgeLabel = `<span class="badge ${badgeClass} badge-evento">${ev.evento}</span>`;
-            table.row.add([ev.data_ora, badgeLabel]);
-          });
-          table.draw();
-        });
-    }
+      document.getElementById('totale-eventi').textContent = `Totale rischi registrati: ${data.length}`;
+      const table = $('#storicoTable').DataTable();
+      table.clear();
 
+      data.forEach(ev => {
+        let badgeClass = '';
+        let badgeLabel = '';
+
+        const livello = ev.livello ? ev.livello.toLowerCase() : '';  // Controlla se livello esiste
+
+
+        // Ignora il livello '-'
+        if (livello === '-' || livello === '') {
+          return; // Non aggiungere nulla se livello è '-' o vuoto
+        }
+
+        // Logica per applicare il badge in base al livello
+        if (livello === 'emergency') {
+          badgeClass = 'badge-danger';  // Rosso per emergenza
+        } else if (livello === 'danger') {
+          badgeClass = 'badge-warning';  // Arancione per pericolo
+        } else if (livello === 'warning') {
+          badgeClass = 'badge-attention';  // Giallo per attenzione
+        } else {
+          console.log('Evento con livello non riconosciuto:', livello);  // Log per eventuali livelli non riconosciuti
+          return;  // Se non è uno dei livelli validi, ignoriamo l'evento
+        }
+
+        badgeLabel = `<span class="badge ${badgeClass} badge-evento">${ev.evento}</span>`;
+        table.row.add([ev.data_ora, badgeLabel]);
+      });
+
+      table.draw();
+    })
+    .catch(error => console.error('Errore nel recupero degli eventi:', error));  // Aggiungi un catch per gestire errori
+}
     function filtraPerTipo(tipo) {
       fetch('/get_allarmi_storico')
         .then(res => res.json())
@@ -308,186 +746,277 @@ function caricaGraficoDaData(dataInizio) {
         });
     }
 
-function esportaSettimanaCSV(data, startDate) {
-  const giorni = [...Array(7)].map((_, i) => {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-  });
 
-  const conteggio = {};
-  giorni.forEach(g => {
-    conteggio[g] = { attenzione: 0, pericolo: 0 };
-  });
+    function esportaGiornoCSV(data, dataGiorno) {
+  const attenzione = conteggioTotaleGiornaliero.attenzione;
+  const pericolo = conteggioTotaleGiornaliero.pericolo;
+  const emergenza = conteggioTotaleGiornaliero.emergenza;
+
+  const giornoStr = typeof dataGiorno === 'string'
+  ? dataGiorno
+  : (dataSelezionataStringa || dataGiorno.toISOString().split('T')[0]);
+  let csv = `Report Giornaliero - ${giornoStr}\n`;
+
+  // Riepilogo
+  csv += `\nRiepilogo del giorno\n`;
+  csv += `Attenzione;Pericolo;Emergenza\n`;
+  csv += `${attenzione};${pericolo};${emergenza}\n`;
+
+  // Dettaglio
+  csv += `\nDettaglio eventi\n`;
+  csv += `Data/Ora;Descrizione;Livello\n`;
 
   data.forEach(ev => {
-    const d = new Date(ev.data_ora);
-    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-    if (conteggio[giorno]) {
-      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
-      conteggio[giorno][tipo]++;
-    }
+    const dataOra = new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+    csv += `"${dataOra}";"${ev.evento}";"${ev.livello}"\n`;
   });
 
-  let csv = 'Data,Allarmi,Pericoli\n';
-  giorni.forEach(g => {
-    csv += `${g},${conteggio[g].attenzione},${conteggio[g].pericolo}\n`;
-  });
-
-  const blob = new Blob([csv], { type: 'text/csv' });
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `settimana_${giorni[0]}_to_${giorni[6]}.csv`;
+  link.download = `report_${giornoStr}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
 
-function esportaSettimanaExcel(data, startDate) {
-  const giorni = [...Array(7)].map((_, i) => {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-  });
 
-  const conteggio = {};
-  giorni.forEach(g => {
-    conteggio[g] = { attenzione: 0, pericolo: 0 };
-  });
-
-  data.forEach(ev => {
-    const d = new Date(ev.data_ora);
-    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-    if (conteggio[giorno]) {
-      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
-      conteggio[giorno][tipo]++;
-    }
-  });
-
-  let rows = [['Data', 'Allarmi', 'Pericoli']];
-  giorni.forEach(g => {
-    rows.push([g, conteggio[g].attenzione, conteggio[g].pericolo]);
-  });
-
+function esportaGiornoExcel(data, dataGiorno) {
+  const attenzione = conteggioTotaleGiornaliero.attenzione;
+  const pericolo = conteggioTotaleGiornaliero.pericolo;
+  const emergenza = conteggioTotaleGiornaliero.emergenza;
+  const giornoStr = typeof dataGiorno === 'string'
+  ? dataGiorno
+  : (dataSelezionataStringa || dataGiorno.toISOString().split('T')[0]);
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.aoa_to_sheet(rows);
-  XLSX.utils.book_append_sheet(wb, ws, 'Settimana');
-  XLSX.writeFile(wb, `settimana_${giorni[0]}_to_${giorni[6]}.xlsx`);
+
+  // Riga formattata (usa stili dopo)
+  const headersRiepilogo = ['Attenzione', 'Pericolo', 'Emergenza'];
+  const valoriRiepilogo = [attenzione, pericolo, emergenza];
+
+  const dettagliHeader = ['Data/Ora', 'Descrizione', 'Livello'];
+  const dettagliRows = data.map(ev => [
+    new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),
+    ev.evento,
+    ev.livello
+  ]);
+
+  // Componi foglio
+  const allRows = [
+    [`Report Giornaliero - ${giornoStr}`],
+    [],
+    headersRiepilogo,
+    valoriRiepilogo,
+    [],
+    ['Dettaglio eventi'],
+    dettagliHeader,
+    ...dettagliRows
+  ];
+
+  const ws = XLSX.utils.aoa_to_sheet(allRows);
+
+  // Applichiamo stili manuali (XLSX stile "raw")
+  const boldCenterStyle = {
+    font: { bold: true },
+    alignment: { horizontal: "center", vertical: "center" },
+    fill: { fgColor: { rgb: "D9D9D9" } } // grigio chiaro
+  };
+
+  // Intestazioni Riepilogo
+  ['A3', 'B3', 'C3'].forEach(cell => { if (ws[cell]) ws[cell].s = boldCenterStyle; });
+  // Intestazioni Dettaglio
+  ['A7', 'B7', 'C7'].forEach(cell => { if (ws[cell]) ws[cell].s = boldCenterStyle; });
+
+  XLSX.utils.book_append_sheet(wb, ws, 'Report Giornaliero');
+  XLSX.writeFile(wb, `report_${giornoStr}.xlsx`);
 }
 
-function esportaSettimanaPDF(data, startDate) {
-  const giorni = [...Array(7)].map((_, i) => {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-  });
+function esportaGiornoPDF(data, dataGiorno) {
+  const attenzione = conteggioTotaleGiornaliero.attenzione;
+  const pericolo = conteggioTotaleGiornaliero.pericolo;
+  const emergenza = conteggioTotaleGiornaliero.emergenza;
+  const giornoStr = typeof dataGiorno === 'string'
+  ? dataGiorno
+  : (dataSelezionataStringa || dataGiorno.toISOString().split('T')[0]);
 
-  const conteggio = {};
-  giorni.forEach(g => {
-    conteggio[g] = { attenzione: 0, pericolo: 0 };
-  });
-
-  data.forEach(ev => {
-    const d = new Date(ev.data_ora);
-    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-    if (conteggio[giorno]) {
-      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
-      conteggio[giorno][tipo]++;
-    }
-  });
-
-  const body = [['Data', 'Allarmi', 'Pericoli']];
-  giorni.forEach(g => {
-    body.push([g, conteggio[g].attenzione, conteggio[g].pericolo]);
-  });
+  const dettagliEventi = data.map(ev => [
+    new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' }),
+    ev.evento,
+    ev.livello
+  ]);
 
   const docDefinition = {
     content: [
-      { text: 'Report Settimanale Allarmi e Pericoli', style: 'header' },
+      { text: `Report Giornaliero - ${giornoStr}`, style: 'header' },
+
+      {
+        table: {
+          widths: ['*', '*', '*'],
+          body: [
+            [
+              { text: 'Attenzione', style: 'tableHeader' },
+              { text: 'Pericolo', style: 'tableHeader' },
+              { text: 'Emergenza', style: 'tableHeader' }
+            ],
+            [attenzione, pericolo, emergenza]
+          ]
+        },
+        layout: {
+          fillColor: (rowIndex) => rowIndex === 0 ? '#f0f0f0' : null
+        },
+        margin: [0, 0, 0, 16]
+      },
+
+      { text: 'Dettaglio eventi', style: 'subheader' },
+
       {
         table: {
           headerRows: 1,
-          widths: ['*', '*', '*'],
-          body: body
+          widths: ['30%', '50%', '20%'],
+          body: [
+            [
+              { text: 'Data/Ora', style: 'tableHeader' },
+              { text: 'Descrizione', style: 'tableHeader' },
+              { text: 'Livello', style: 'tableHeader' }
+            ],
+            ...dettagliEventi
+          ]
+        },
+        layout: {
+          fillColor: (rowIndex) => rowIndex === 0 ? '#f0f0f0' : null
         }
       }
     ],
     styles: {
-      header: {
-        fontSize: 16,
-        bold: true,
-        margin: [0, 0, 0, 10]
-      }
-    }
+      header: { fontSize: 18, bold: true, margin: [0, 0, 0, 10] },
+      subheader: { fontSize: 14, bold: true, margin: [0, 10, 0, 6] },
+      tableHeader: { bold: true, fontSize: 11, color: 'black' }
+    },
+    defaultStyle: {
+      fontSize: 10
+    },
+    pageMargins: [30, 30, 30, 30]
   };
 
-  pdfMake.createPdf(docDefinition).download(`settimana_${giorni[0]}_to_${giorni[6]}.pdf`);
+  pdfMake.createPdf(docDefinition).download(`report_${giornoStr}.pdf`);
 }
 
-function stampaSettimana(data, startDate) {
-  const giorni = [...Array(7)].map((_, i) => {
-    const d = new Date(startDate);
-    d.setDate(d.getDate() + i);
-    return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-  });
 
-  const conteggio = {};
-  giorni.forEach(g => {
-    conteggio[g] = { attenzione: 0, pericolo: 0 };
-  });
+function stampaGiorno(data, giornoData) {
+  let attenzione = conteggioTotaleGiornaliero.attenzione;
+  let pericolo = conteggioTotaleGiornaliero.pericolo;
+  let emergenza = conteggioTotaleGiornaliero.emergenza;
 
-  data.forEach(ev => {
-    const d = new Date(ev.data_ora);
-    const giorno = d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, '0') + "-" + String(d.getDate()).padStart(2, '0');
-    if (conteggio[giorno]) {
-      const tipo = ev.evento.toLowerCase().includes('pericolo') ? 'pericolo' : 'attenzione';
-      conteggio[giorno][tipo]++;
-    }
-  });
+  const dettagliHTML = data.map(ev => {
+    const dataOra = new Date(ev.data_ora).toLocaleString('it-IT', { timeZone: 'Europe/Rome' });
+    return `<tr><td>${dataOra}</td><td>${ev.evento}</td><td>${ev.livello}</td></tr>`;
+  }).join('');
 
-  let stampa = '<h3>Report Settimanale</h3>';
-  stampa += '<table border="1" cellspacing="0" cellpadding="4"><tr><th>Data</th><th>Allarmi</th><th>Pericoli</th></tr>';
-  giorni.forEach(g => {
-    stampa += `<tr><td>${g}</td><td>${conteggio[g].attenzione}</td><td>${conteggio[g].pericolo}</td></tr>`;
-  });
-  stampa += '</table>';
+  const giornoStr = typeof giornoData === 'string'
+  ? giornoData
+  : (dataSelezionataStringa || giornoData.toISOString().split('T')[0]);
+  let html = `<h3>Report Giornaliero - ${giornoStr}</h3>`;
+  html += `<table border="1" cellspacing="0" cellpadding="4">
+    <tr><th>Attenzione</th><th>Pericolo</th><th>Emergenza</th></tr>
+    <tr><td>${attenzione}</td><td>${pericolo}</td><td>${emergenza}</td></tr>
+  </table>`;
+
+  html += `<h4>Dettaglio eventi</h4>
+  <table border="1" cellspacing="0" cellpadding="4">
+    <tr><th>Data/Ora</th><th>Descrizione</th><th>Livello</th></tr>
+    ${dettagliHTML}
+  </table>`;
 
   const win = window.open('', '', 'width=800,height=600');
-  win.document.write(`<!DOCTYPE html><html><head><title>Stampa Report</title></head><body>${stampa}</body></html>`);
+  win.document.write(`<!DOCTYPE html><html><head><title>Stampa Giornaliera</title></head><body>${html}</body></html>`);
   win.document.close();
   win.print();
 }
-
+    let dataSelezionata = null;
+    let dataSelezionataStringa = null; // <- nuovo
 
     $(document).ready(function () {
       $('#storicoTable').DataTable({
+        "order": [[0, 'desc']],
         dom: '<"top-buttons"B><"top-controls"lf>rtip',
         buttons: [
-          { extend: 'csv', text: '📥 Esporta CSV', className: 'btn btn-outline-primary btn-sm' },
-          { extend: 'excel', text: '📊 Esporta Excel', className: 'btn btn-outline-success btn-sm' },
-          { extend: 'pdf', text: '📄 Esporta PDF', className: 'btn btn-outline-danger btn-sm' },
-          { extend: 'print', text: '🖨️ Stampa', className: 'btn btn-outline-secondary btn-sm' }
+          { extend: 'csv',   text: '📥 Esporta CSV',
+    className: 'btn btn-outline-primary btn-sm',
+    action: function () {
+      fetch('/get_allarmi_storico')
+        .then(res => res.json())
+        .then(data => esportaCSVConBadge(data));
+    }
+  },
+          { extend: 'excel', text: '📊 Esporta Excel',
+    className: 'btn btn-outline-success btn-sm',
+    action: function () {
+      fetch('/get_allarmi_storico')
+        .then(res => res.json())
+        .then(data => esportaExcelConBadge(data));
+    }
+  },
+          { extend: 'pdf',  text: '📄 Esporta PDF', className: 'btn btn-outline-danger btn-sm',
+          action: function () {
+          fetch('/get_allarmi_storico')
+            .then(res => res.json())
+            .then(data => esportaTabellaPDFConBadge(data));
+        }
+  },
+    { extend: 'print',  text: '🖨️ Stampa', className: 'btn btn-outline-secondary btn-sm',
+        action: function () {
+          fetch('/get_allarmi_storico')
+            .then(res => res.json())
+            .then(data => stampaTabellaConBadge(data));
+        }
+  }
+          ],
+    columnDefs: [
+      {
+        targets: 0, // Prima colonna (Data/Ora)
+        width: '150px'  // Imposta la larghezza della colonna
+      },
+      {
+        targets: 1, // Seconda colonna (Evento)
+        width: '250px'  // Imposta la larghezza della colonna
+      }
         ]
       });
 
       caricaStorico();
       setInterval(caricaStorico, 30000);
 
+      // ⏱️ Imposta oggi come data selezionata all'avvio
+      dataSelezionata = new Date();
+      dataSelezionata.setHours(0, 0, 0, 0);
 
-      let dataSelezionata = null;
+      // 📅 Formatta per l’input flatpickr
+      const oggiStr = dataSelezionata.toISOString().split('T')[0];
+      dataSelezionataStringa = oggiStr;
+
+      // Imposta il valore nel campo datepicker
+      document.getElementById("dateStart")._flatpickr.setDate(oggiStr);
+      document.getElementById("dateEnd")._flatpickr.setDate(oggiStr);
+
+      // Carica il grafico del giorno attuale
+      caricaGraficoDaData(dataSelezionata);
+
+      
 
       flatpickr("#datepicker", {
-  altInput: true,
-  altFormat: "D, M j Y", // più compatto
-  dateFormat: "Y-m-d",
-  altInputClass: "form-control form-control-sm custom-datepicker",
-  onChange: function (selectedDates) {
-    if (selectedDates.length > 0) {
-      dataSelezionata = selectedDates[0];
-      caricaGraficoDaData(dataSelezionata);
-    }
-  }
-});
+        altInput: true,
+        altFormat: "D, M j Y",
+        dateFormat: "Y-m-d",
+        altInputClass: "form-control form-control-sm custom-datepicker",
+        onChange: function (selectedDates, dateStr) {
+          if (selectedDates.length > 0) {
+            dataSelezionata = selectedDates[0];
+            dataSelezionataStringa = dateStr;  // <-- la data esatta da usare per stampa
+            caricaGraficoDaData(dataSelezionata);
+          }
+        }
+      });
+
 document.querySelectorAll(".dropdown-export-option").forEach(btn => {
   btn.addEventListener("click", function () {
     const formato = this.getAttribute("data-format");
@@ -497,8 +1026,9 @@ document.querySelectorAll(".dropdown-export-option").forEach(btn => {
     }
 
     const start = new Date(dataSelezionata);
-    const end = new Date(start);
-    end.setDate(start.getDate() + 6);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(dataSelezionata);
+    end.setHours(23, 59, 59, 999);
 
     fetch('/get_allarmi_storico')
       .then(res => res.json())
@@ -509,13 +1039,13 @@ document.querySelectorAll(".dropdown-export-option").forEach(btn => {
         });
 
         if (formato === 'csv') {
-  esportaSettimanaCSV(filtrati, start);
+          esportaGiornoCSV(filtrati, start);
 } else if (formato === 'excel') {
-  esportaSettimanaExcel(filtrati, start);
+  esportaGiornoExcel(filtrati, start);
 } else if (formato === 'pdf') {
-  esportaSettimanaPDF(filtrati, start);
+  esportaGiornoPDF(filtrati, start);
 } else if (formato === 'print') {
-  stampaSettimana(filtrati, start);
+  stampaGiorno(filtrati, start);
 }
       });
   });
