@@ -2,7 +2,15 @@
 container_name: mysql-container-2
 pw: my-secret-pw
 
-
 # esempio per accedere e fare il login 
 nome_utente : martina
 pw: password
+
+#comando per runnare flask da terminale (bisogna stare dentro il percorso dove si trova flask_app)
+FLASK_APP=app.py FLASK_DEBUG=true flask run 
+
+#per avviare docker da terminale eseguire questi comandi
+docker exec -it mysql-container-2 mysql -u root -p
+inserire password: 
+usare il comando USE fireguard_db
+per vedere le tabelle SHOW TABLES
