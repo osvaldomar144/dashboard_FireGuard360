@@ -9,6 +9,7 @@ import os
 from werkzeug.utils import secure_filename
 import pytz
 from datetime import datetime
+from functools import wraps
 
 app = Flask(__name__)
 
@@ -35,37 +36,41 @@ def get_db_connection():
     )
     return conn
 
+# Funzione per la richiesta di login
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
 
-        # Connessione al database
         conn = get_db_connection()
         cur = conn.cursor()
-
-        # Recupera l'utenza dal database
         cur.execute('SELECT id, username, password_hash FROM utenti WHERE username = %s;', (username,))
         user = cur.fetchone()
-
         cur.close()
         conn.close()
 
-        # Controllo delle credenziali in modo sicuro
         if user and user[2] == password: 
-            session['user_id'] = user[0]           # Salva l'ID utente nella sessione
-            session['username'] = user[1]          # Salva il nome utente nella sessione
-            return redirect(url_for('index'))      # Reindirizza alla homepage
+            session['user_id'] = user[0]
+            session['username'] = user[1]
+            return redirect(url_for('index'))
         else:
-            return 'Credenziali errate, riprova.', 403  # Messaggio di errore per credenziali sbagliate
+            return render_template('login.html', errore="Credenziali errate, riprova.")
 
     return render_template('login.html')
 
 @app.route('/')
+@login_required
 def index():
-    if 'user_id' not in session:
-        return redirect(url_for('login'))
 
     conn = get_db_connection()
     cur = conn.cursor()
@@ -243,6 +248,7 @@ def get_filtered_data():
 
 #RIVEDERE QUESTO CODICE - forse è meglio separare e fare due app.route differenti per le due query ?
 @app.route('/dati-arduino')
+@login_required
 def dati_arduino():
     conn = get_db_connection()
     cur = conn.cursor()
@@ -390,6 +396,7 @@ def get_data_range():
         'chart_umidita': umidita,
     })
 @app.route('/controlli')
+@login_required
 def controlli():
     return render_template('controlli.html')
 
@@ -474,6 +481,7 @@ def get_hotspot_status():
 
 
 @app.route('/allarmi')
+@login_required
 def allarmi():
     return render_template('allarmi.html', username=session.get('username'))
 
@@ -511,12 +519,13 @@ def get_mock_battery_level():
     return random.randint(0, 100)
 
 @app.route('/drone')
+@login_required
 def drone_page():
     return render_template('drone_page.html', battery=get_mock_battery_level())
 
 @app.route('/drone/status')
 def drone_status():
-    return jsonify({"battery": get_mock_battery_level(), "status": "connected"})
+    return jsonify({"battery": get_mock_battery_level(), "status": "not connected"})
 
 
 """ @app.route('/drone')
@@ -622,7 +631,6 @@ def logout():
     session.pop('user_id', None)
     session.pop('username', None)
     return redirect(url_for('login'))
-
 
 @app.context_processor
 def inject_username():
