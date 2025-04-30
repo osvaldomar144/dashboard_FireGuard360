@@ -86,6 +86,10 @@
           <strong id="alert-volo-msg">🛫 Operazione in corso...</strong>
         </div>
 
+        <div id="alert-prova-connessione" class="alert alert-info fade show" style="position: fixed; top: 80px; right: 20px; width: 350px; z-index: 9999; display: none;">
+          <strong id="alert-prova-connessione-msg">Connessione in corso...</strong>
+        </div>
+
         <div class="container-fluid">
           <h1 class="h3 mb-4 text-gray-800">Drone DJI Tello</h1>
 
@@ -231,6 +235,12 @@
       setTimeout(() => $('#alert-volo').fadeOut(), 3000);
     }
 
+    function mostraSnackbarConnessione(msg) {
+      $('#alert-prova-connessione-msg').text(msg);
+      $('#alert-prova-connessione').fadeIn();
+      setTimeout(() => $('#alert-prova-connessione').fadeOut(), 3000);
+    }
+
     function getBatteryMessage(level) {
       if (level >= 80) return 'Ottima';
       if (level >= 50) return 'Buona';
@@ -242,13 +252,6 @@
       const payload = {
         drone_connected: drone_connected,
       };
-
-      let drone_state = 'standby'; // Stato iniziale del drone
-
-function takeoff() {
-  const payload = {
-    drone_connected: drone_connected,
-  };
 
   $.ajax({
     url: '/drone/takeoff',
@@ -302,7 +305,6 @@ function land() {
     }
   });
 }
-    }
 
     $(document).ready(function () {
       const initialBattery = parseInt("{{ battery | default(0) }}");
@@ -369,8 +371,6 @@ function land() {
         });
     }
 }
-
-
   </script>
 </body>
 </html>
