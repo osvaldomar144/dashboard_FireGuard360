@@ -24,6 +24,7 @@ app.secret_key = 'your_secret_key'  # Da cambiare con una chiave segreta sicura 
 
 # Variabile per tenere traccia della connessione al drone
 #drone_connected = False
+#
 
 # Funzione per connettersi a MySQL
 def get_db_connection():
