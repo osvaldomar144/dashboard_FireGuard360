@@ -1,7 +1,7 @@
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
-#from djitellopy import Tello
+from djitellopy import Tello
 import time
 from datetime import datetime, timedelta
 import random
@@ -10,6 +10,7 @@ from werkzeug.utils import secure_filename
 import pytz
 from datetime import datetime
 from functools import wraps
+import requests
 
 app = Flask(__name__)
 
@@ -20,11 +21,10 @@ def inject_user():
     return dict(username=session.get('username'))
 
 app.secret_key = 'your_secret_key'  # Da cambiare con una chiave segreta sicura (opzionale)
-#drone = Tello()
+drone = Tello()
 
 # Variabile per tenere traccia della connessione al drone
 #drone_connected = False
-#
 
 # Funzione per connettersi a MySQL
 def get_db_connection():
@@ -516,58 +516,81 @@ def get_allarmi_storico():
 
     return jsonify(risultati)
 
+"""
 def get_mock_battery_level():
-    return random.randint(0, 100)
+    return random.randint(0, 100)"""
 
 @app.route('/drone')
 @login_required
 def drone_page():
-    return render_template('drone_page.html', battery=get_mock_battery_level())
+    return render_template('drone_page.html', battery=0)
 
+"""
 @app.route('/drone/status')
 def drone_status():
     return jsonify({"battery": get_mock_battery_level(), "status": "not connected"})
+"""
 
 
-""" @app.route('/drone')
-def drone_page():
-    global drone_connected
+@app.route('/drone/connect', methods=['POST'])
+def drone_page_connect():
     try:
+        state = None
         # Tenta la connessione al drone
         drone.connect()
+
+        state = drone.get_current_state()
+
         drone_connected = True
+        return jsonify({"connected": drone_connected, "state": state})
     except Exception as e:
         drone_connected = False
-        print(f"Errore di connessione: {e}")
+        return jsonify({"connected": drone_connected, "state": str(state), "error": str(e)})
 
-    # Ottieni livello batteria
-    battery_level = drone.get_battery() if drone_connected else 0
+    
+    #return render_template('drone_page.html', connected=drone_connected)
 
-    return render_template('drone_page.html', connected=drone_connected, battery=battery_level)
 
-@app.route('/drone/status')
+# Disconnessione (simulata)
+@app.route('/drone/disconnect', methods=['POST'])
+def drone_page_disconnect():
+    global drone_connected
+    drone_connected = False
+    return jsonify({"connected": drone_connected})
+
+
+@app.route('/drone/status', methods=['POST'])
 def drone_status():
-    if drone_connected:
+    data = request.get_json()
+    drone_connected = data.get('drone_connected')
+
+    if data.get('drone_connected'):
         battery_level = drone.get_battery()
-        return jsonify({"battery": battery_level, "status": "connected"})
+        return jsonify({"battery": battery_level, "connected": drone_connected})
     else:
-        return jsonify({"battery": 0, "status": "not connected"})
+        return jsonify({"battery": 0, "connected": drone_connected})
 
 @app.route('/drone/takeoff', methods=['POST'])
 def drone_takeoff():
-    if drone_connected:
+    data = request.get_json()
+    drone_connected = data.get('drone_connected')
+
+    if data.get('drone_connected'):
         drone.takeoff()
-        return jsonify({"status": "taken off"})
+        return jsonify({"action": "takeoff", "connected": drone_connected})
     else:
-        return jsonify({"status": "not connected"})
+        return jsonify({"action": "error", "connected": drone_connected})
 
 @app.route('/drone/land', methods=['POST'])
 def drone_land():
-    if drone_connected:
+    data = request.get_json()
+    drone_connected = data.get('drone_connected')
+
+    if data.get('drone_connected'):
         drone.land()
-        return jsonify({"status": "landed"})
+        return jsonify({"action": "land", "connected": drone_connected})
     else:
-        return jsonify({"status": "not connected"}) """
+        return jsonify({"action": "error", "connected": drone_connected})
 
 @app.route('/profilo', methods=['GET', 'POST'])
 def profilo():

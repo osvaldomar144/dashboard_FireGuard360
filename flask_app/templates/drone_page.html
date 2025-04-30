@@ -33,6 +33,40 @@
     .btn-volo {
       width: 120px;
     }
+
+/* Classe per il pulsante verde (Connessione) */
+.btn-green {
+    background-color: #28a745;  /* Colore verde */
+    color: white;
+}
+
+/* Classe per il pulsante rosso (Disconnessione) */
+.btn-red {
+    background-color: red;
+    color: white;
+}
+
+.btn-green:hover {
+    background-color: #218838;  /* Colore verde scuro quando hover */
+}
+
+.btn-red:hover {
+    background-color: darkred;  /* Colore rosso scuro quando hover */
+}
+
+/* Classe per i pulsanti disabilitati (visivamente) */
+.btn-disabled {
+    background-color: #e0e0e0;  /* Colore grigio chiaro */
+    color: #bdbdbd;  /* Testo più chiaro */
+    cursor: not-allowed;  /* Cambia il cursore a una manina disabilitata */
+}
+
+/* Rimuovi l'animazione hover quando il pulsante è disabilitato */
+.btn-disabled:hover {
+    background-color: #e0e0e0;  /* Mantieni il colore grigio anche al passaggio del mouse */
+    cursor: not-allowed;
+}
+
   </style>
 </head>
 <body id="page-top">
@@ -60,8 +94,11 @@
               <div class="col-md-4 text-center">
                 <img src="{{ url_for('static', filename='img/drone.png') }}" class="img-fluid rounded mb-3" style="max-width: 230px;">
                 <div class="mt-2">
-                  <button class="btn btn-indaco btn-volo me-2" onclick="takeoff()">Decollo</button>
-                  <button class="btn btn-secondary btn-volo" onclick="land()">Atterraggio</button>
+                  <button id="takeoff-btn" class="btn btn-indaco btn-volo me-2" onclick="takeoff()">Decollo</button>
+                  <button id="land-btn" class="btn btn-secondary btn-volo" onclick="land()">Atterraggio</button>
+                  <!-- Modifica il pulsante in modo che il testo cambi dinamicamente -->
+                  <button id="connect-btn" class="btn btn-success btn-volo mt-2" onclick="toggleConnection()">Connetti</button>
+
                 </div>
               </div>
               <div class="col-md-8">
@@ -99,6 +136,9 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
   <script>
+
+    var drone_connected = false;
+
     Chart.register({
       id: 'centerText',
       beforeDraw(chart) {
@@ -154,19 +194,33 @@
     }
 
     function updateDroneStatus() {
-      $.get('/drone/status', function (data) {
-        if (data.status === 'connected') {
-          $('#drone-status').text('Connesso ✅');
-          $('#battery-label').text(getBatteryMessage(data.battery));
-          $('#mode-label').text('In volo');
-          updateBatteryChart(data.battery);
-          if ($('#alert-connessione').is(':visible')) $('#alert-connessione').fadeOut();
-        } else {
-          $('#drone-status').text('Non connesso ❌');
-          $('#battery-label').text('-');
-          $('#mode-label').text('Offline');
-          updateBatteryChart(0);
-          if (!$('#alert-connessione').is(':visible')) $('#alert-connessione').fadeIn();
+      const payload = {
+        drone_connected: drone_connected,
+      };
+
+      $.ajax({
+        url: '/drone/status',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify(payload),
+        success: function (data) {
+          if (data.connected) {
+            $('#drone-status').text('Connesso ✅');
+            $('#battery-label').text(getBatteryMessage(data.battery));
+            $('#mode-label').text('In volo');
+            updateBatteryChart(data.battery);
+            if ($('#alert-connessione').is(':visible')) $('#alert-connessione').fadeOut();
+          } else {
+            $('#drone-status').text('Non connesso ❌');
+            $('#battery-label').text('-');
+            $('#mode-label').text('Offline');
+            updateBatteryChart(0);
+            if (!$('#alert-connessione').is(':visible')) $('#alert-connessione').fadeIn();
+          }
+          drone_connected = Boolean(data.connected);
+        },
+        error: function (xhr, status, error) {
+          console.error("Errore Ajax:", error);
         }
       });
     }
@@ -185,21 +239,69 @@
     }
 
     function takeoff() {
-      $('#mode-label').text('Decollo...');
-      mostraSnackbarVolo('🛫 Il drone sta decollando...');
-      $.post('/drone/takeoff', function (data) {
-        alert('Drone decollo: ' + data.status);
-        $('#mode-label').text('In volo');
-      });
-    }
+      const payload = {
+        drone_connected: drone_connected,
+      };
 
-    function land() {
-      $('#mode-label').text('Atterraggio...');
-      mostraSnackbarVolo('🛬 Il drone sta atterrando...');
-      $.post('/drone/land', function (data) {
-        alert('Drone atterrato: ' + data.status);
-        $('#mode-label').text('Standby');
-      });
+      let drone_state = 'standby'; // Stato iniziale del drone
+
+function takeoff() {
+  const payload = {
+    drone_connected: drone_connected,
+  };
+
+  $.ajax({
+    url: '/drone/takeoff',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(payload),
+    success: function (data) {
+      if (data.connected) {
+        $('#mode-label').text('Decollo ...');
+        mostraSnackbarVolo('🛫 Il drone sta decollando...');
+        drone_state = 'takeoff'; // Aggiorna lo stato a decollo
+      } else {
+        $('#mode-label').text('Errore esecuzione commando ...');
+        mostraSnackbarVolo('Errore esecuzione commando ...');
+        drone_state = 'standby'; // Imposta lo stato a standby in caso di errore
+      }
+      drone_connected = Boolean(data.connected);
+    },
+    error: function (xhr, status, error) {
+      console.error("Errore Ajax:", error);
+      drone_state = 'standby'; // In caso di errore, imposta lo stato a standby
+    }
+  });
+}
+
+function land() {
+  const payload = {
+    drone_connected: drone_connected,
+  };
+
+  $.ajax({
+    url: '/drone/land',
+    type: 'POST',
+    contentType: 'application/json',
+    data: JSON.stringify(payload),
+    success: function (data) {
+      if (data.connected) {
+        $('#mode-label').text('Atterraggio...');
+        mostraSnackbarVolo('🛬 Il drone sta atterrando...');
+        drone_state = 'landing'; // Aggiorna lo stato a atterraggio
+      } else {
+        $('#mode-label').text('Errore esecuzione commando ...');
+        mostraSnackbarVolo('Errore esecuzione commando ...');
+        drone_state = 'standby'; // Imposta lo stato a standby in caso di errore
+      }
+      drone_connected = Boolean(data.connected);
+    },
+    error: function (xhr, status, error) {
+      console.error("Errore Ajax:", error);
+      drone_state = 'standby'; // In caso di errore, imposta lo stato a standby
+    }
+  });
+}
     }
 
     $(document).ready(function () {
@@ -208,6 +310,67 @@
       updateDroneStatus();
       setInterval(updateDroneStatus, 5000);
     });
+
+    
+
+    function toggleConnection() {
+    if (drone_connected) {
+        // Se il drone è connesso, disconnetti e cambia il testo del pulsante
+        $.post('/drone/disconnect', function(data) {
+            if (!data.connected) {
+                $('#drone-status').text('Non connesso ❌');
+                $('#battery-label').text('-');
+                $('#mode-label').text('Offline');
+                $('#connect-btn').text('Connetti');
+                
+                // Cambia il colore del pulsante a verde (per connessione)
+                $('#connect-btn').removeClass('btn-red').addClass('btn-green');  // Imposta il pulsante su verde
+
+                // Disabilita i pulsanti Decollo e Atterraggio e li rende grigi
+                $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');  // Disabilita e applica il colore grigio
+                $('#land-btn').prop('disabled', true).addClass('btn-disabled');  // Disabilita e applica il colore grigio
+
+                drone_connected = false;
+            }
+        });
+    } else {
+        // Se il drone non è connesso, connetti e cambia il testo del pulsante
+        $.post('/drone/connect', function(data) {
+            if (data.connected) {
+                $('#drone-status').text('Connesso ✅');
+                $('#battery-label').text('Controllo...');
+                updateBatteryChart(0); // Imposta il livello della batteria a 0 all'inizio
+                $('#connect-btn').text('Disconnetti');
+                
+                // Cambia il colore del pulsante a rosso (per disconnessione)
+                $('#connect-btn').removeClass('btn-green').addClass('btn-red');  // Imposta il pulsante su rosso
+
+                // Abilita i pulsanti Decollo e Atterraggio
+                $('#takeoff-btn').prop('disabled', false).removeClass('btn-disabled');  // Rimuove la disabilitazione e classe visiva
+                $('#land-btn').prop('disabled', false).removeClass('btn-disabled');  // Rimuove la disabilitazione e classe visiva
+
+                drone_connected = true;
+            } else {
+                $('#drone-status').text('Non connesso ❌');
+                $('#battery-label').text('-');
+                $('#mode-label').text('Offline');
+                updateBatteryChart(0);
+                $('#connect-btn').text('Connetti');
+                
+                // Cambia il colore del pulsante a verde
+                $('#connect-btn').removeClass('btn-red').addClass('btn-green');  // Torna al verde
+
+                // Disabilita i pulsanti Decollo e Atterraggio e li rende grigi
+                $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');  // Disabilita e applica il colore grigio
+                $('#land-btn').prop('disabled', true).addClass('btn-disabled');  // Disabilita e applica il colore grigio
+
+                drone_connected = false;
+            }
+        });
+    }
+}
+
+
   </script>
 </body>
 </html>
