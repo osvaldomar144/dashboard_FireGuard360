@@ -118,7 +118,8 @@
                   <button id="takeoff-btn" class="btn btn-indaco btn-volo me-2" onclick="takeoff()">Decollo</button>
                   <button id="land-btn" class="btn btn-secondary btn-volo" onclick="land()">Atterraggio</button>
                   <!-- Modifica il pulsante in modo che il testo cambi dinamicamente -->
-                  <button id="connect-btn" class="btn btn-success btn-volo mt-2" onclick="toggleConnection()">Connetti</button>
+                  <!-- Togliere qualsiasi riferimento al pulsante rosso -->
+                  <button id="connect-btn" class="btn btn-green btn-volo mt-2" onclick="toggleConnection()">Connetti</button>
 
                 </div>
               </div>
@@ -356,62 +357,109 @@ function land() {
 var drone_connected = false;  // Stato di connessione
 
 function toggleConnection() {
-    // Mostra subito il messaggio di "Connessione in corso"
-    $('#alert-prova-connessione').fadeIn();  // Mostra il messaggio di connessione in corso
-    $('#alert-connessione').fadeOut();  // Nascondi "Drone non connesso" se presente
-    $('#alert-errore-connessione').fadeOut();  // Nascondi errore, se presente
-    $('#drone-status').text('In corso...');
+    // Se il drone è connesso, disconnetti
+    if (drone_connected) {
+        // Mostra il messaggio di "Disconnessione in corso"
+        $('#alert-prova-connessione').fadeIn();  // Mostra il messaggio di connessione in corso
+        $('#alert-connessione').fadeOut();  // Nascondi "Drone non connesso" se presente
+        $('#alert-errore-connessione').fadeOut();  // Nascondi errore, se presente
+        $('#drone-status').text('In corso...');
 
-    // Avvia la connessione, non blocca l'interfaccia
-    $.post('/drone/connect', function(data) {
-        if (data.connected) {
-            // Se la connessione è riuscita
-            $('#drone-status').text('Connesso ✅');
-            $('#battery-label').text('Controllo...');
-            updateBatteryChart(0);  // Imposta il livello della batteria a 0
-            $('#connect-btn').text('Disconnetti');
-            $('#connect-btn').removeClass('btn-green').addClass('btn-red'); // Cambia colore al pulsante
-            mostraSnackbarConnessione('Connessione riuscita!');
-            $('#alert-prova-connessione').fadeOut();  // Nascondi "Connessione in corso"
-            setInterval(updateDroneStatus(), 10000);
-            // Abilita i pulsanti Decollo e Atterraggio
-            $('#takeoff-btn').prop('disabled', false).removeClass('btn-disabled');
-            $('#land-btn').prop('disabled', false).removeClass('btn-disabled');
-        } else {
-            // Se la connessione non è riuscita
-            $('#drone-status').text('Non connesso ❌');
+        $.post('/drone/disconnect', function(data) {
+            if (!data.connected) {
+                // Se la disconnessione è riuscita
+                $('#drone-status').text('Non connesso ❌');
+                $('#battery-label').text('-');
+                $('#mode-label').text('Offline');
+                updateBatteryChart(0);
+                $('#connect-btn').text('Connetti');  // Cambia il testo del pulsante a "Connetti"
+                $('#connect-btn').removeClass('btn-red').addClass('btn-green'); // Cambia il pulsante a verde
+                mostraSnackbarConnessione('Disconnessione riuscita!');
+                $('#alert-prova-connessione').fadeOut();  // Nascondi "Connessione in corso"
+                drone_connected = false;  // Imposta la connessione su false
+                console.log("Drone connesso: ", drone_connected);
+
+                // Disabilita i pulsanti Decollo e Atterraggio
+                $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');
+                $('#land-btn').prop('disabled', true).addClass('btn-disabled');
+            } else {
+                // Se la disconnessione non è riuscita
+                $('#drone-status').text('Errore disconnessione ❌');
+                mostraSnackbarConnessioneErrore('Errore: disconnessione non riuscita');
+                $('#alert-prova-connessione').fadeOut();
+            }
+        }).fail(function() {
+            // Se la chiamata fallisce, mostra l'errore
+            $('#drone-status').text('Non status ❌');
+            $('#battery-label').text('-');
+            $('#mode-label').text('Offline');
+            updateBatteryChart(0);
+            $('#connect-btn').text('Connetti');
+            $('#alert-prova-connessione').fadeOut();
+            mostraSnackbarConnessioneErrore('Errore: disconnessione non riuscita');
+            setTimeout(updateDroneStatus, 3000);
+            $('#connect-btn').removeClass('btn-red').addClass('btn-green');  // Torna al verde
+            // Disabilita i pulsanti Decollo e Atterraggio
+            $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');
+            $('#land-btn').prop('disabled', true).addClass('btn-disabled');
+        });
+    } else {
+        // Se il drone non è connesso, esegui la connessione
+        // Mostra subito il messaggio di "Connessione in corso"
+        $('#alert-prova-connessione').fadeIn();  // Mostra il messaggio di connessione in corso
+        $('#alert-connessione').fadeOut();  // Nascondi "Drone non connesso" se presente
+        $('#alert-errore-connessione').fadeOut();  // Nascondi errore, se presente
+        $('#drone-status').text('In corso...');
+
+        $.post('/drone/connect', function(data) {
+            if (data.connected) {
+                // Se la connessione è riuscita
+                $('#drone-status').text('Connesso ✅');
+                $('#battery-label').text('Controllo...');
+                updateBatteryChart(0);  // Imposta il livello della batteria a 0
+                $('#connect-btn').text('Disconnetti');  // Cambia il testo del pulsante a "Disconnetti"
+                $('#connect-btn').removeClass('btn-green').addClass('btn-red'); // Cambia il pulsante a rosso
+                mostraSnackbarConnessione('Connessione riuscita!');
+                $('#alert-prova-connessione').fadeOut();  // Nascondi "Connessione in corso"
+                setInterval(updateDroneStatus, 10000);
+                // Abilita i pulsanti Decollo e Atterraggio
+                $('#takeoff-btn').prop('disabled', false).removeClass('btn-disabled');
+                $('#land-btn').prop('disabled', false).removeClass('btn-disabled');
+                drone_connected = true;  // Imposta la connessione su true
+                console.log("Drone connesso: ", drone_connected);
+            } else {
+                // Se la connessione non è riuscita
+                $('#drone-status').text('Non connesso ❌');
+                $('#battery-label').text('-');
+                $('#mode-label').text('Offline');
+                updateBatteryChart(0);
+                $('#connect-btn').text('Connetti');
+                $('#alert-prova-connessione').fadeOut();  // Nascondi "Connessione in corso"
+                mostraSnackbarConnessioneErrore('Errore: connessione non riuscita');
+                
+                setTimeout(updateDroneStatus, 3000);
+                $('#connect-btn').removeClass('btn-red').addClass('btn-green');  // Torna al verde
+                // Disabilita i pulsanti Decollo e Atterraggio
+                $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');
+                $('#land-btn').prop('disabled', true).addClass('btn-disabled');
+            }
+        }).fail(function() {
+            // Se la chiamata fallisce, mostra l'errore
+            $('#drone-status').text('Non status ❌');
             $('#battery-label').text('-');
             $('#mode-label').text('Offline');
             updateBatteryChart(0);
             $('#connect-btn').text('Connetti');
             $('#alert-prova-connessione').fadeOut();  // Nascondi "Connessione in corso"
             mostraSnackbarConnessioneErrore('Errore: connessione non riuscita');
-            
             setTimeout(updateDroneStatus, 3000);
             $('#connect-btn').removeClass('btn-red').addClass('btn-green');  // Torna al verde
-
             // Disabilita i pulsanti Decollo e Atterraggio
             $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');
             $('#land-btn').prop('disabled', true).addClass('btn-disabled');
-        }
-    }).fail(function() {
-        // Se la chiamata fallisce, mostra l'errore
-        $('#drone-status').text('Non connesso ❌');
-        $('#battery-label').text('-');
-        $('#mode-label').text('Offline');
-        updateBatteryChart(0);
-        $('#connect-btn').text('Connetti');
-        $('#alert-prova-connessione').fadeOut();  // Nascondi "Connessione in corso"
-        mostraSnackbarConnessioneErrore('Errore: connessione non riuscita');
-        setTimeout(updateDroneStatus, 3000);
-        $('#connect-btn').removeClass('btn-red').addClass('btn-green');  // Torna al verde
-
-        // Disabilita i pulsanti Decollo e Atterraggio
-        $('#takeoff-btn').prop('disabled', true).addClass('btn-disabled');
-        $('#land-btn').prop('disabled', true).addClass('btn-disabled');
-    });
+        });
+    }
 }
-
 
 
 $(document).ready(function () {

@@ -569,6 +569,7 @@ def drone_status():
         return jsonify({"battery": battery_level, "connected": drone_connected})
     else:
         return jsonify({"battery": 0, "connected": drone_connected})
+    
 
 @app.route('/drone/takeoff', methods=['POST'])
 def drone_takeoff():
