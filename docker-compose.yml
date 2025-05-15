@@ -1,15 +1,62 @@
 version: '3.8'
 
 services:
-  db:
-    image: mysql:latest
-    container_name: mysql-container-2
-    environment:
-      MYSQL_ROOT_PASSWORD: my-secret-pw
-    ports:
-      - "3306:3306"
-    volumes:
-      - db-data:/var/lib/mysql
 
-volumes:
-  db-data:
+  # 🧩 Gateway di Ingestione dati dai sensori (Flask)
+  data-ingestion-gateway:
+    build: ./data-ingestion-gateway
+    container_name: data-ingestion-gateway
+    ports:
+      - "5001:5001"
+    environment:
+      - KAFKA_BROKER=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - iot-net
+
+  # 📡 Kafka Broker
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: kafka
+    ports:
+      - "9092:9092"
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    depends_on:
+      - zookeeper
+    networks:
+      - iot-net
+
+  # 🧠 Zookeeper (per il coordinamento Kafka)
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - iot-net
+
+  # 🔍 Kafka UI (monitoraggio e debug)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"  # localhost:8090 per accedere
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local-cluster
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka
+    networks:
+      - iot-net
+
+networks:
+  iot-net:
+    driver: bridge
