@@ -1,11 +1,12 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, window, avg, to_timestamp
+from pyspark.sql.functions import from_json, col, window, avg, to_timestamp, lit
 from pyspark.sql.types import StructType, StringType, FloatType, TimestampType
 
 # Schema dei dati JSON ricevuti da Kafka
 schema = StructType() \
     .add("temperature", FloatType()) \
     .add("humidity", FloatType()) \
+    .add("gas", FloatType()) \
     .add("sensor_id", StringType()) \
     .add("timestamp", TimestampType())
 
@@ -29,7 +30,26 @@ df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
     .select("data.*") \
     .withColumn("timestamp", to_timestamp("timestamp"))
 
-# Analisi: media temperatura ogni 1 minuto per sensore
+# 1. Scrittura dati grezzi
+def write_raw_to_mysql(batch_df, batch_id):
+    batch_df.write \
+        .format("jdbc") \
+        .option("url", "jdbc:mysql://mysql:3306/fireGuard360_db") \
+        .option("dbtable", "sensor_data") \
+        .option("user", "fireguard_user") \
+        .option("password", "fireguard_pass") \
+        .option("driver", "com.mysql.cj.jdbc.Driver") \
+        .mode("append") \
+        .save()
+
+df_parsed.writeStream \
+    .foreachBatch(write_raw_to_mysql) \
+    .outputMode("append") \
+    .option("checkpointLocation", "/tmp/checkpoints/raw") \
+    .start()
+
+
+# 2. Scrittura aggregati
 df_avg = df_parsed \
     .withWatermark("timestamp", "2 minutes") \
     .groupBy(
@@ -43,9 +63,12 @@ df_avg = df_parsed \
         col("window.end").alias("window_end")
     )
 
-# Funzione per scrivere su MySQL
-def write_to_mysql(batch_df, batch_id):
-    batch_df.write \
+
+def write_avg_to_mysql(batch_df, batch_id):
+    # Rimuove duplicati per (sensor_id, window_start, window_end) e conserva ultimo valore
+    deduplicated_df = batch_df.dropDuplicates(["sensor_id", "window_start", "window_end"])
+
+    deduplicated_df.write \
         .format("jdbc") \
         .option("url", "jdbc:mysql://mysql:3306/fireGuard360_db") \
         .option("dbtable", "sensor_data_analysis") \
@@ -55,11 +78,43 @@ def write_to_mysql(batch_df, batch_id):
         .mode("append") \
         .save()
 
-# Scrittura streaming nel DB
-query = df_avg.writeStream \
+df_avg.writeStream \
+    .foreachBatch(write_avg_to_mysql) \
     .outputMode("update") \
-    .foreachBatch(write_to_mysql) \
-    .option("checkpointLocation", "/tmp/checkpoints/sensor") \
+    .option("checkpointLocation", "/tmp/checkpoints/avg") \
     .start()
 
-query.awaitTermination()
+# 3. Scrittura alert rischio incendio
+df_alerts = df_parsed \
+    .filter((col("temperature") > 45) & (col("humidity") < 20)) \
+    .withColumn("alert_type", lit("High Fire Risk")) \
+    .withColumn("description", lit("Temperature > 45°C and Humidity < 20%")) \
+    .select(
+        col("sensor_id"),
+        col("alert_type"),
+        col("description"),
+        col("timestamp")
+    )
+
+def write_alerts_to_mysql(batch_df, batch_id):
+    if batch_df.isEmpty():
+        return
+    batch_df.write \
+        .format("jdbc") \
+        .option("url", "jdbc:mysql://mysql:3306/fireGuard360_db") \
+        .option("dbtable", "fire_risk_alerts") \
+        .option("user", "fireguard_user") \
+        .option("password", "fireguard_pass") \
+        .option("driver", "com.mysql.cj.jdbc.Driver") \
+        .mode("append") \
+        .save()
+
+df_alerts.writeStream \
+    .foreachBatch(write_alerts_to_mysql) \
+    .outputMode("append") \
+    .option("checkpointLocation", "/tmp/checkpoints/alerts") \
+    .start()
+
+
+# Avvia tutti i flussi
+spark.streams.awaitAnyTermination()
