@@ -26,6 +26,7 @@ services:
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
       - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CREATE_TOPICS=sensordata:1:1
     depends_on:
       - zookeeper
     networks:
@@ -54,6 +55,69 @@ services:
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
     depends_on:
       - kafka
+    networks:
+      - iot-net
+
+  # 🛠 Servizio per creare topic Kafka all'avvio
+  create-kafka-topic:
+    image: bitnami/kafka:3.6
+    container_name: create-kafka-topic
+    depends_on:
+      - kafka
+    networks:
+      - iot-net
+    entrypoint: ["/bin/bash", "/scripts/create-topic.sh"]
+    volumes:
+      - ./kafka-scripts:/scripts
+
+  # 📊 Spark application (Master, Worker and Application)
+  spark-master:
+    image: bitnami/spark:3.5.5-debian-12-r7
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - "7077:7077" # Porta master Spark
+      - "8081:8080" # Interfaccia web Spark master
+    networks:
+      - iot-net
+
+  spark-worker:
+    image: bitnami/spark:3.5.5-debian-12-r7
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - iot-net
+
+  spark-app:
+    build:
+      context: ./spark-app
+    container_name: spark-app
+    depends_on:
+      - kafka
+      - mysql
+      - spark-master
+    networks:
+      - iot-net
+
+  # 🐬 Database MySQL
+  mysql:
+    image: mysql:8.0.36
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fireGuard360_db
+      MYSQL_USER: fireguard_user
+      MYSQL_PASSWORD: fireguard_pass
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - iot-net
 
