@@ -24,6 +24,32 @@ CREATE TABLE IF NOT EXISTS sensor_data_analysis (
     INDEX idx_sensor_window (sensor_id, window_start, window_end)
 );
 
+-- Tabella di appoggio per la popolazione di sensor_data_analysis
+CREATE TABLE IF NOT EXISTS sensor_data_analysis_staging (
+    sensor_id VARCHAR(50) NOT NULL,
+    avg_temperature FLOAT NOT NULL,
+    window_start DATETIME NOT NULL,
+    window_end DATETIME NOT NULL
+);
+
+-- Stored procedure per inserimento nella tabella sensor_data_analysis prendendo i dati da sensor_data_analysis_staging
+DROP PROCEDURE IF EXISTS upsert_sensor_analysis;
+
+DELIMITER //
+
+CREATE PROCEDURE upsert_sensor_analysis()
+BEGIN
+    INSERT INTO sensor_data_analysis (sensor_id, avg_temperature, window_start, window_end)
+    SELECT sensor_id, avg_temperature, window_start, window_end
+    FROM sensor_data_analysis_staging
+    ON DUPLICATE KEY UPDATE
+        avg_temperature = VALUES(avg_temperature);
+
+    TRUNCATE TABLE sensor_data_analysis_staging;
+END //
+
+DELIMITER ;
+
 -- 3. Tabella per alert incendio (eventi critici)
 CREATE TABLE IF NOT EXISTS fire_risk_alerts (
     id BIGINT AUTO_INCREMENT PRIMARY KEY,

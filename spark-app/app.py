@@ -1,6 +1,29 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, window, avg, to_timestamp, lit
 from pyspark.sql.types import StructType, StringType, FloatType, TimestampType
+from dotenv import load_dotenv
+import os
+
+load_dotenv(dotenv_path="CONFIG_FIREGUARD360.env")
+
+# variabili configurazione per DB
+DB_URL = os.getenv("DB_URL")
+DB_USER = os.getenv("DB_USER")
+DB_PASSWORD = os.getenv("DB_PASSWORD")
+DB_DRIVER = os.getenv("DB_DRIVER")
+TABLE_RAW_DATA = os.getenv("TABLE_RAW_DATA")
+TABLE_AGGREGATED_DATA = os.getenv("TABLE_AGGREGATED_DATA")
+TABLE_AGG_STAGING = os.getenv("TABLE_AGG_STAGING")
+TABLE_RISK_HISTORY = os.getenv("TABLE_RISK_HISTORY")
+
+# variabili di configurazione per KAFKA
+KAFKA_SERVER = os.getenv("KAFKA_SERVER")
+KAFKA_TOPIC = os.getenv("KAFKA_TOPIC")
+
+# variabili di configurazione per SPARK
+SPARK_APP_NAME = os.getenv("SPARK_APP_NAME")
+SPARK_MASTER_URL = os.getenv("SPARK_MASTER_URL")
+
 
 # Schema dei dati JSON ricevuti da Kafka
 schema = StructType() \
@@ -12,15 +35,15 @@ schema = StructType() \
 
 # Inizializza Spark
 spark = SparkSession.builder \
-    .appName("SensorDataProcessor") \
-    .master("spark://spark-master:7077") \
+    .appName(SPARK_APP_NAME) \
+    .master(SPARK_MASTER_URL) \
     .getOrCreate()
 
 # Legge dal topic Kafka
 df_raw = spark.readStream \
     .format("kafka") \
-    .option("kafka.bootstrap.servers", "kafka:9092") \
-    .option("subscribe", "sensordata") \
+    .option("kafka.bootstrap.servers", KAFKA_SERVER) \
+    .option("subscribe", KAFKA_TOPIC) \
     .option("startingOffsets", "latest") \
     .load()
 
@@ -34,11 +57,11 @@ df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
 def write_raw_to_mysql(batch_df, batch_id):
     batch_df.write \
         .format("jdbc") \
-        .option("url", "jdbc:mysql://mysql:3306/fireGuard360_db") \
-        .option("dbtable", "sensor_data") \
-        .option("user", "fireguard_user") \
-        .option("password", "fireguard_pass") \
-        .option("driver", "com.mysql.cj.jdbc.Driver") \
+        .option("url", DB_URL) \
+        .option("dbtable", TABLE_RAW_DATA) \
+        .option("user", DB_USER) \
+        .option("password", DB_PASSWORD) \
+        .option("driver", DB_DRIVER) \
         .mode("append") \
         .save()
 
@@ -65,18 +88,29 @@ df_avg = df_parsed \
 
 
 def write_avg_to_mysql(batch_df, batch_id):
-    # Rimuove duplicati per (sensor_id, window_start, window_end) e conserva ultimo valore
-    deduplicated_df = batch_df.dropDuplicates(["sensor_id", "window_start", "window_end"])
-
-    deduplicated_df.write \
+    # Scrive in staging
+    batch_df.write \
         .format("jdbc") \
-        .option("url", "jdbc:mysql://mysql:3306/fireGuard360_db") \
-        .option("dbtable", "sensor_data_analysis") \
-        .option("user", "fireguard_user") \
-        .option("password", "fireguard_pass") \
-        .option("driver", "com.mysql.cj.jdbc.Driver") \
+        .option("url", DB_URL) \
+        .option("dbtable", TABLE_AGG_STAGING) \
+        .option("user", DB_USER) \
+        .option("password", DB_PASSWORD) \
+        .option("driver", DB_DRIVER) \
         .mode("append") \
         .save()
+
+    # Chiama stored procedure
+    import pymysql
+    conn = pymysql.connect(
+        host="mysql",
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database="fireGuard360_db"
+    )
+    with conn.cursor() as cursor:
+        cursor.execute("CALL upsert_sensor_analysis();")
+    conn.commit()
+    conn.close()
 
 df_avg.writeStream \
     .foreachBatch(write_avg_to_mysql) \
@@ -101,11 +135,11 @@ def write_alerts_to_mysql(batch_df, batch_id):
         return
     batch_df.write \
         .format("jdbc") \
-        .option("url", "jdbc:mysql://mysql:3306/fireGuard360_db") \
-        .option("dbtable", "fire_risk_alerts") \
-        .option("user", "fireguard_user") \
-        .option("password", "fireguard_pass") \
-        .option("driver", "com.mysql.cj.jdbc.Driver") \
+        .option("url", DB_URL) \
+        .option("dbtable", TABLE_RISK_HISTORY) \
+        .option("user", DB_USER) \
+        .option("password", DB_PASSWORD) \
+        .option("driver", DB_DRIVER) \
         .mode("append") \
         .save()
 
