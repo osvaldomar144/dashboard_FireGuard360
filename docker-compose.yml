@@ -70,7 +70,8 @@ services:
     volumes:
       - ./kafka-scripts:/scripts
 
-  # 📊 Spark application (Master, Worker and Application)
+  # 🗂️ Spark application (Master, Worker and Application)
+  # ⚙️ Spark Master
   spark-master:
     image: bitnami/spark:3.5.5-debian-12-r7
     container_name: spark-master
@@ -82,6 +83,7 @@ services:
     networks:
       - iot-net
 
+  # ⚙️ Spark Worker
   spark-worker:
     image: bitnami/spark:3.5.5-debian-12-r7
     container_name: spark-worker
@@ -118,6 +120,19 @@ services:
       - "3306:3306"
     volumes:
       - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - iot-net
+
+  # 📊 Dashboard con flask
+  flask-dashboard:
+    build: ./flask-dashboard
+    container_name: flask-dashboard
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    environment:
+      - PYTHONUNBUFFERED=1
     networks:
       - iot-net
 
