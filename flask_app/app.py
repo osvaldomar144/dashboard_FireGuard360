@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, url_for, session, j
 import mysql.connector
 from werkzeug.security import generate_password_hash, check_password_hash
 from djitellopy import Tello
+from flask_socketio import SocketIO
 import time
 from datetime import datetime, timedelta
 import random
@@ -13,7 +14,7 @@ from functools import wraps
 import requests
 
 app = Flask(__name__)
-
+socketio = SocketIO(app)
 
 
 @app.context_processor
@@ -660,5 +661,30 @@ def logout():
 def inject_username():
     return dict(username=session.get('username'))
 
+
+
+@app.route('/dati-page')
+def test_dati_page():
+    return render_template('testConnection.html')
+
+@app.route('/dati', methods=['POST'])
+def ricevi_dati():
+    data = request.get_json()
+    print("Ricevuto:", data)
+
+    # Invia dati ai client WebSocket
+    socketio.emit('nuovo_dato', data)
+    return jsonify({"status": "ok"})
+
+# EVENTI WebSocket
+@socketio.on('connect')
+def connessione_attiva():
+    print("🟢 Client connesso via WebSocket")
+
+@socketio.on('disconnect')
+def disconnessione():
+    print("🔴 Client disconnesso")
+
+
 if __name__ == "__main__":
-    app.run(debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000)

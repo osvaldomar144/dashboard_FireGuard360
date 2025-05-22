@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Dati Arduino in tempo reale</title>
+    <script src="https://cdn.socket.io/4.3.2/socket.io.min.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const socket = io();
+
+            socket.on('nuovo_dato', data => {
+                document.getElementById('temperatura').innerText = data.temperatura ?? "N/A";
+                document.getElementById('umidita').innerText = data.umidita ?? "N/A";
+                document.getElementById('timestamp').innerText = data.timestamp ?? "N/A";
+            });
+        });
+    </script>
+</head>
+<body>
+    <h1>Dati ricevuti da Arduino (WebSocket)</h1>
+    <p><strong>Temperatura:</strong> <span id="temperatura">--</span> °C</p>
+    <p><strong>Umidità:</strong> <span id="umidita">--</span> %</p>
+    <p><strong>Ultimo aggiornamento:</strong> <span id="timestamp">--</span></p>
+</body>
+</html>

@@ -1,15 +1,163 @@
 version: '3.8'
 
 services:
-  db:
-    image: mysql:latest
-    container_name: mysql-container-2
+
+  # 🧩 Gateway di Ingestione dati dai sensori (Flask)
+  data-ingestion-gateway:
+    build: ./data-ingestion-gateway
+    container_name: data-ingestion-gateway
+    ports:
+      - "5001:5001"
     environment:
-      MYSQL_ROOT_PASSWORD: my-secret-pw
+      - KAFKA_BROKER=kafka:9092
+    depends_on:
+      - kafka
+    networks:
+      - iot-net
+
+  # 🔌 Lettura da porta seriale (Arduino Uno WiFi Rev2) - Solo ambiente linux
+  # serial-to-kafka:
+  #  build:
+  #    context: ./serial-to-kafka-linux
+  #  container_name: serial-to-kafka-linux
+  #  devices:
+  #    - "/dev/ttyACM0:/dev/ttyACM0"
+  #  depends_on:
+  #    - kafka
+  #  environment:
+  #    - SERIAL_PORT=/dev/ttyACM0
+  #    - BAUD_RATE=9600
+  #    - KAFKA_BROKER=kafka:9092
+  #    - KAFKA_TOPIC=sensordata
+  #  networks:
+  #    - iot-net
+
+  # 📡 Kafka Broker
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: kafka
+    ports:
+      - "9092:9092"    # listener interno ai container
+      - "9093:9093"    # listener accessibile da Windows
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9093
+      #- KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
+      #- KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CREATE_TOPICS=sensordata:1:1
+    depends_on:
+      - zookeeper
+    networks:
+      - iot-net
+
+  # 🧠 Zookeeper (per il coordinamento Kafka)
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      - ALLOW_ANONYMOUS_LOGIN=yes
+    networks:
+      - iot-net
+
+  # 🔍 Kafka UI (monitoraggio e debug)
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-ui
+    ports:
+      - "8090:8080"  # localhost:8090 per accedere
+    environment:
+      - KAFKA_CLUSTERS_0_NAME=local-cluster
+      - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
+      - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
+    depends_on:
+      - kafka
+    networks:
+      - iot-net
+
+  # 🛠 Servizio per creare topic Kafka all'avvio
+  create-kafka-topic:
+    image: bitnami/kafka:3.6
+    container_name: create-kafka-topic
+    depends_on:
+      - kafka
+    networks:
+      - iot-net
+    entrypoint: ["/bin/bash", "/scripts/create-topic.sh"]
+    volumes:
+      - ./kafka-scripts:/scripts
+
+  # 🗂️ Spark application (Master, Worker and Application)
+  # ⚙️ Spark Master
+  spark-master:
+    image: bitnami/spark:3.5.5-debian-12-r7
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+    ports:
+      - "7077:7077" # Porta master Spark
+      - "8081:8080" # Interfaccia web Spark master
+    networks:
+      - iot-net
+
+  # ⚙️ Spark Worker
+  spark-worker:
+    image: bitnami/spark:3.5.5-debian-12-r7
+    container_name: spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+    depends_on:
+      - spark-master
+    networks:
+      - iot-net
+
+  spark-app:
+    build:
+      context: ./spark-app
+    container_name: spark-app
+    depends_on:
+      - kafka
+      - mysql
+      - spark-master
+    networks:
+      - iot-net
+
+  # 🐬 Database MySQL
+  mysql:
+    image: mysql:8.0.36
+    container_name: mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: fireGuard360_db
+      MYSQL_USER: fireguard_user
+      MYSQL_PASSWORD: fireguard_pass
     ports:
       - "3306:3306"
     volumes:
-      - db-data:/var/lib/mysql
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - iot-net
 
-volumes:
-  db-data:
+  # 📊 Dashboard con flask
+  flask-dashboard:
+    build: ./flask-dashboard
+    container_name: flask-dashboard
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mysql
+    environment:
+      - PYTHONUNBUFFERED=1
+    networks:
+      - iot-net
+
+networks:
+  iot-net:
+    driver: bridge
