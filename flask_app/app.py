@@ -402,9 +402,32 @@ def get_data_range():
 def controlli():
     return render_template('controlli.html')
 
-@app.route('/controllo/rele/<stato>', methods=['POST'])
-def controllo_rele(stato):
-   #VALORI FITTIZI -> verranno presi direttamente dal db 
+@app.route('/controllo/rele/<int:numero>/<stato>', methods=['POST'])
+def controllo_rele(numero, stato):
+    # Esempio di controllo su numero valido (1 o 2)
+    if numero not in [1, 2]:
+        return jsonify({"stato": "errore", "messaggio": "Relè non valido"}), 400
+
+    # Qui potresti leggere / scrivere su DB o dispositivo reale
+    if stato == 'on':
+        stato_attuale = 'on'
+    elif stato == 'off':
+        stato_attuale = 'off'
+    elif stato == 'stato':
+        # Qui ritorna lo stato attuale reale, per ora simuliamo
+        stato_attuale = 'off'  
+    else:
+        stato_attuale = 'errore'
+
+    return jsonify({"stato": stato_attuale})
+
+
+@app.route('/controllo/pompa/<int:numero>/<stato>', methods=['POST'])
+def controllo_pompa(numero, stato):
+    if numero not in [1, 2]:
+        return jsonify({"stato": "errore", "messaggio": "Pompa non valida"}), 400
+
+    # Simulazione come sopra
     if stato == 'on':
         stato_attuale = 'on'
     elif stato == 'off':
@@ -570,6 +593,7 @@ def drone_status():
         return jsonify({"battery": battery_level, "connected": drone_connected})
     else:
         return jsonify({"battery": 0, "connected": drone_connected})
+    
 
 @app.route('/drone/takeoff', methods=['POST'])
 def drone_takeoff():
