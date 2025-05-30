@@ -159,14 +159,14 @@ services:
       - iot-net
 
   # 🚁 Servizio video drone con YOLO + ArUco
-  drone-vision-service:
-    build: ./drone-stream
-    container_name: drone-vision-service
-    ports:
-      - "5010:5001"  # Espone il feed MJPEG su localhost:5010
-    privileged: true  # necessario per WiFi del drone
-    networks:
-      - iot-net
+  # drone-vision-service:
+  #   build: ./drone-stream-host-linux
+  #   container_name: drone-vision-service
+  #   ports:
+  #     - "5010:5001"  # Espone il feed MJPEG su localhost:5010
+  #   privileged: true  # necessario per WiFi del drone
+  #   networks:
+  #     - iot-net
 
 networks:
   iot-net:

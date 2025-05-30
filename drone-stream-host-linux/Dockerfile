@@ -10,6 +10,9 @@ RUN apt-get update && apt-get install -y \
     libgl1-mesa-glx \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+# Crea directory di configurazione per Ultralytics per evitare warning
+RUN mkdir -p /root/.config/Ultralytics && chmod -R 777 /root/.config
+
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -20,6 +23,6 @@ COPY best.pt .
 COPY fire.mp4 .
 
 # Default to simulation mode unless overridden
-ENV USE_SIMULATION=true
+ENV USE_SIMULATION=false
 
 CMD ["python", "drone_stream_server.py"]
