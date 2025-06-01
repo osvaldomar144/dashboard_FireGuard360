@@ -1,0 +1,37 @@
+{% extends "layout_base.html" %}
+
+{% block body %}
+<div class="d-flex">
+  <!-- Sidebar -->
+  <nav class="bg-dark text-white p-3 vh-100" style="width: 250px;">
+    <h2 class="h5 mb-4">FireGuard360</h2>
+    <ul class="nav flex-column">
+      <li class="nav-item">
+        <a class="nav-link text-white" href="{{ url_for('overview.index') }}">
+          <i class="fas fa-gauge-high me-2"></i>Dashboard
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" href="{{ url_for('drone.index') }}">
+          <i class="fas fa-drone me-2"></i>Droni
+        </a>
+      </li>
+      <li class="nav-item">
+        <a class="nav-link text-white" href="{{ url_for('device.index') }}">
+          <i class="fas fa-microchip me-2"></i>Dispositivi
+        </a>
+      </li>
+      <li class="nav-item mt-3">
+        <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
+          <i class="fas fa-arrow-right-from-bracket me-2"></i>Logout
+        </a>
+      </li>
+    </ul>
+  </nav>
+
+  <!-- Contenuto principale -->
+  <div class="flex-grow-1 p-4">
+    {% block content %}{% endblock %}
+  </div>
+</div>
+{% endblock %}
