@@ -1,37 +1,105 @@
 {% extends "layout_base.html" %}
 
 {% block body %}
-<div class="d-flex">
+<div class="d-flex min-vh-100">
   <!-- Sidebar -->
-  <nav class="bg-dark text-white p-3 vh-100" style="width: 250px;">
-    <h2 class="h5 mb-4">FireGuard360</h2>
-    <ul class="nav flex-column">
-      <li class="nav-item">
-        <a class="nav-link text-white" href="{{ url_for('overview.index') }}">
-          <i class="fas fa-gauge-high me-2"></i>Dashboard
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link text-white" href="{{ url_for('drone.index') }}">
-          <i class="fas fa-drone me-2"></i>Droni
-        </a>
-      </li>
-      <li class="nav-item">
-        <a class="nav-link text-white" href="{{ url_for('device.index') }}">
-          <i class="fas fa-microchip me-2"></i>Dispositivi
-        </a>
-      </li>
-      <li class="nav-item mt-3">
-        <a class="nav-link text-danger" href="{{ url_for('auth.logout') }}">
-          <i class="fas fa-arrow-right-from-bracket me-2"></i>Logout
-        </a>
-      </li>
-    </ul>
-  </nav>
+  <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" style="width: 250px;">
+    <!-- Logo -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center my-3" href="{{ url_for('overview.index') }}">
+      <div class="sidebar-brand-icon">
+        <i class="fas fa-fire"></i>
+      </div>
+      <div class="sidebar-brand-text mx-3">FireGuard360</div>
+    </a>
 
-  <!-- Contenuto principale -->
-  <div class="flex-grow-1 p-4">
-    {% block content %}{% endblock %}
+    <hr class="sidebar-divider my-0">
+
+    <!-- Dashboard -->
+    <li class="nav-item {% if request.endpoint == 'overview.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('overview.index') }}">
+        <i class="fas fa-fw fa-gauge-high"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-white px-3">Sezioni</div>
+
+    <li class="nav-item {% if request.endpoint == 'drone.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('drone.index') }}">
+        <i class="fas fa-fw fa-helicopter"></i>
+        <span>Droni</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.endpoint == 'device.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('device.index') }}">
+        <i class="fas fa-fw fa-microchip"></i>
+        <span>Dispositivi</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.endpoint == 'alerts.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('alerts.index') }}">
+        <i class="fas fa-fw fa-bell"></i>
+        <span>Storico Allarmi</span>
+      </a>
+    </li>
+
+    <hr class="sidebar-divider">
+
+    <li class="nav-item mt-auto">
+      <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+        <i class="fas fa-fw fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Main Content -->
+  <div class="d-flex flex-column flex-grow-1 bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-light bg-white topbar shadow mb-4 px-4">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown no-arrow">
+          <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+             aria-haspopup="true" aria-expanded="false">
+            <span class="me-2 d-none d-lg-inline text-gray-600 small">username</span>
+            <img class="img-profile rounded-circle" src="{{ url_for('static', filename='images/profile/undraw_profile.svg') }}">
+          </a>
+          <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+            <a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>Profilo</a>
+            <a class="dropdown-item" href="#"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>Impostazioni</a>
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+              <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>Logout
+            </a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Pagina principale -->
+    <div class="container-fluid px-4">
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<!-- Logout Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Conferma Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">Sei sicuro di voler uscire?</div>
+      <div class="modal-footer">
+        <button class="btn btn-info" data-bs-dismiss="modal">Annulla</button>
+        <a class="btn btn-danger" href="{{ url_for('auth.logout') }}">Esci</a>
+      </div>
+    </div>
   </div>
 </div>
 {% endblock %}

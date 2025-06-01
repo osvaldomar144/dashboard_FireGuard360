@@ -3,6 +3,18 @@ body {
 	height: 100vh;
 }
 
+/******************* SIDEBAR AND NAVBAR **************/
+
+.sidebar {
+  min-height: 100vh;
+}
+
+.img-profile {
+  width: 32px;
+  height: 32px;
+}
+
+
 /******************* LOGIN ***************************/
 .h-custom {
 	height: calc(100vh - 73px);
