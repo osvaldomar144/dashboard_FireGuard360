@@ -1,21 +1,49 @@
 body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
+	background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.03));
+	height: 100vh;
 }
 
-header {
-    background: #333;
-    color: white;
-    padding: 1em;
+/******************* LOGIN ***************************/
+.h-custom {
+	height: calc(100vh - 73px);
 }
 
-nav a {
-    color: white;
-    margin-right: 1em;
-    text-decoration: none;
+.form-control::placeholder {
+	color: #adb5bd;
 }
 
-main {
-    padding: 2em;
+.login-card {
+	background-color: white;
+	border-radius: 20px;
+	box-shadow: 0 0 20px rgba(0, 123, 255, 0.1);
+	padding: 40px 30px;
+}
+
+footer {
+	background-color: #0d6efd;
+}
+
+footer a {
+	color: white;
+}
+
+footer a:hover {
+	text-decoration: underline;
+}
+
+.image-container {
+	position: relative;
+	overflow: hidden;
+}
+
+.custom-image {
+	width: 100%;
+	max-width: 400px;
+	height: auto;
+	border-radius: 0px;
+	transition: transform 0.3s ease;
+}
+
+.custom-image:hover {
+	transform: scale(1.02);
 }
