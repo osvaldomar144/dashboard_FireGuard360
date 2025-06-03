@@ -6,7 +6,19 @@ body {
 /******************* SIDEBAR AND NAVBAR **************/
 
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 250px !important;
+  overflow-y: auto;
+  z-index: 1030;
+}
+
+.main-content {
+  margin-left: 250px;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 .img-profile {

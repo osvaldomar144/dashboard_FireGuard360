@@ -1,12 +1,18 @@
 {% extends "layout_base.html" %}
 
+{% block extra_head %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+{% endblock %}
+
+
 {% block body %}
 
 {% import "_components/notifications.html" as notifications %}
 
-<div class="d-flex min-vh-100">
+<div>
   <!-- Sidebar -->
-  <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" style="width: 250px;">
+  <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
     <!-- Logo -->
     <a class="sidebar-brand d-flex align-items-center justify-content-center my-3" href="{{ url_for('overview.index') }}">
       <div class="sidebar-brand-icon">
@@ -60,14 +66,14 @@
   </ul>
 
   <!-- Main Content -->
-  <div class="d-flex flex-column flex-grow-1 bg-light">
+  <div class="main-content d-flex flex-column flex-grow-1 bg-light">
     <!-- Navbar -->
     <nav class="navbar navbar-expand navbar-light bg-white topbar shadow mb-4 px-4">
       <ul class="navbar-nav ms-auto">
         <li class="nav-item dropdown no-arrow">
           <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
              aria-haspopup="true" aria-expanded="false">
-            <span class="me-2 d-none d-lg-inline text-gray-600 small">username</span>
+            <span class="me-2 d-none d-lg-inline text-gray-600 small">{{ current_user.username }}</span>
             <img class="img-profile rounded-circle" src="{{ url_for('static', filename='images/profile/undraw_profile.svg') }}">
           </a>
           <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
@@ -107,3 +113,37 @@
   </div>
 </div>
 {% endblock %}
+
+{% block extra_scripts %}
+<!-- Data Table -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+  <!-- Export -->
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $('table.datatable').each(function(){
+        $(this).DataTable({
+          responsive: true,
+          language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/it-IT.json'
+          },
+          dom: 'Bfrtip',
+          buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+          ]
+        });
+      });
+    });
+  </script>
+
+{% endblock %}
+
