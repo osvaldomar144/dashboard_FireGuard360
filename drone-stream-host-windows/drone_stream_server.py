@@ -12,8 +12,8 @@ import traceback
 USE_SIMULATION = os.environ.get("USE_SIMULATION", "true").lower() == "true"
 SIMULATION_SOURCE = os.environ.get("SIMULATION_SOURCE", "fire.mp4")
 YOLO_MODEL_PATH = os.environ.get("YOLO_MODEL_PATH", "best.pt")
-FRAME_WIDTH = int(os.environ.get("FRAME_WIDTH", 640))
-FRAME_HEIGHT = int(os.environ.get("FRAME_HEIGHT", 480))
+FRAME_WIDTH = int(os.environ.get("FRAME_WIDTH", 1280))
+FRAME_HEIGHT = int(os.environ.get("FRAME_HEIGHT", 720))
 
 # === VERIFICHE FILE NECESSARI ===
 if USE_SIMULATION and not os.path.exists(SIMULATION_SOURCE):
