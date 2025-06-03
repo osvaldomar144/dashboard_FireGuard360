@@ -1,5 +1,21 @@
 {% extends "layout_dashboard.html" %}
-{% block title %}Alerts History{% endblock %}
+
+{% import "_components/table_macros.html" as tables %}
+
+{% block title %}Storico Allarmi{% endblock %}
+
 {% block content %}
-    <h2>Alerts</h2>
+<h2>Storico Allarmi</h2>
+
+<!-- Ultimi Allarmi -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Lista Allarmi</h6>
+  </div>
+  <div class="card-body">
+    {{ tables.render_table(['Timestamp', 'Descrizione'], alert_rows) }}
+  </div>
+</div>
+
+
 {% endblock %}
