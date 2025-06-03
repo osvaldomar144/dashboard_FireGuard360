@@ -1,6 +1,9 @@
 {% extends "layout_base.html" %}
 
 {% block body %}
+
+{% import "_components/notifications.html" as notifications %}
+
 <div class="d-flex min-vh-100">
   <!-- Sidebar -->
   <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar" style="width: 250px;">
@@ -81,6 +84,7 @@
 
     <!-- Pagina principale -->
     <div class="container-fluid px-4">
+      {{ notifications.render_notifications() }}
       {% block content %}{% endblock %}
     </div>
   </div>

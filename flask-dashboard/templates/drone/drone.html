@@ -175,7 +175,7 @@
     document.getElementById("rotateLeftBtn").addEventListener("click", () => logCommand("RUOTA SX"));
     document.getElementById("rotateRightBtn").addEventListener("click", () => logCommand("RUOTA DX"));
 
-    // 🔁 Simulazione automatica ogni 3 secondi
+    // Simulazione automatica ogni 3 secondi
     setInterval(() => {
       const battery = Math.floor(Math.random() * 101); // 0-100%
       const altitude = (Math.random() * 5).toFixed(1); // 0.0 - 5.0 m
