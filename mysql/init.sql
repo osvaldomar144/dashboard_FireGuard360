@@ -69,3 +69,23 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(100) NOT NULL,
     role ENUM('admin', 'operator') DEFAULT 'operator'
 );
+
+
+-- ========================================================================================
+--                          ALL STORED PROCEDURES
+-- ========================================================================================
+
+-- Stored procedure per ottenere gli ultimi N record dalla tabella fire_risk_alerts
+DROP PROCEDURE IF EXISTS get_latest_fire_alerts;
+
+DELIMITER //
+
+CREATE PROCEDURE get_latest_fire_alerts(IN limit_rows INT)
+BEGIN
+    SELECT *
+    FROM fire_risk_alerts
+    ORDER BY timestamp DESC
+    LIMIT limit_rows;
+END //
+
+DELIMITER ;
