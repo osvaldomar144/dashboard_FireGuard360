@@ -1,8 +1,81 @@
-{% extends "layout.html" %}
+{% extends "layout_dashboard.html" %}
+
+{% import "_components/table_macros.html" as tables %}
 
 {% block title %}Overview{% endblock %}
 
 {% block content %}
 <h2>Benvenuto, {{ current_user.username }}!</h2>
-<p>Questa è la dashboard.</p>
+
+<!-- Valori Attuali -->
+<div class="row mt-4">
+  <!-- Temperatura -->
+  <div class="col-xl-4 col-md-6 mb-4">
+    <div id="card-temperatura" class="card border-left-warning shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1" id="titolo-temperatura">
+              Temperatura Attuale
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800" id="temperatura">Caricamento...</div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Umidità -->
+  <div class="col-xl-4 col-md-6 mb-4">
+    <div id="card-umidita" class="card border-left-info shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-info text-uppercase mb-1" id="titolo-umidita">
+              Umidità Attuale
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800" id="umidita">Caricamento...</div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-tint fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Fumo -->
+  <div class="col-xl-4 col-md-6 mb-4">
+    <div id="card-fumo" class="card border-left-success shadow h-100 py-2">
+      <div class="card-body">
+        <div class="row no-gutters align-items-center">
+          <div class="col mr-2">
+            <div class="text-xs font-weight-bold text-success text-uppercase mb-1" id="titolo-fumo">
+              Fumo Attuale
+            </div>
+            <div class="h5 mb-0 font-weight-bold text-gray-800" id="fumo">Caricamento...</div>
+          </div>
+          <div class="col-auto">
+            <i class="fas fa-smoking fa-2x text-gray-300"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Ultimi Allarmi -->
+<div class="card shadow mb-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Ultimi Allarmi</h6>
+  </div>
+  <div class="card-body">
+    {{ tables.render_table(['timestamp', 'sensor_id', 'alert_type', 'description', 'severity'], alert_rows) }}
+  </div>
+</div>
+
+
 {% endblock %}

@@ -1,5 +1,5 @@
 from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, window, avg, to_timestamp, lit
+from pyspark.sql.functions import from_json, col, window, avg, to_timestamp, lit, when, max as max_
 from pyspark.sql.types import StructType, StringType, FloatType, TimestampType
 from dotenv import load_dotenv
 import os
@@ -11,10 +11,10 @@ DB_URL = os.getenv("DB_URL")
 DB_USER = os.getenv("DB_USER")
 DB_PASSWORD = os.getenv("DB_PASSWORD")
 DB_DRIVER = os.getenv("DB_DRIVER")
-TABLE_RAW_DATA = os.getenv("TABLE_RAW_DATA")
-TABLE_AGGREGATED_DATA = os.getenv("TABLE_AGGREGATED_DATA")
 TABLE_AGG_STAGING = os.getenv("TABLE_AGG_STAGING")
+TABLE_RISK_STAGING = os.getenv("TABLE_RISK_STAGING")
 TABLE_RISK_HISTORY = os.getenv("TABLE_RISK_HISTORY")
+WINDOW_DURATION = os.getenv("AGG_WINDOW_DURATION", "5 minutes")
 
 # variabili di configurazione per KAFKA
 KAFKA_SERVER = os.getenv("KAFKA_SERVER")
@@ -53,42 +53,27 @@ df_parsed = df_raw.selectExpr("CAST(value AS STRING)") \
     .select("data.*") \
     .withColumn("timestamp", to_timestamp("timestamp"))
 
-# 1. Scrittura dati grezzi
-def write_raw_to_mysql(batch_df, batch_id):
-    batch_df.write \
-        .format("jdbc") \
-        .option("url", DB_URL) \
-        .option("dbtable", TABLE_RAW_DATA) \
-        .option("user", DB_USER) \
-        .option("password", DB_PASSWORD) \
-        .option("driver", DB_DRIVER) \
-        .mode("append") \
-        .save()
-
-df_parsed.writeStream \
-    .foreachBatch(write_raw_to_mysql) \
-    .outputMode("append") \
-    .option("checkpointLocation", "/tmp/checkpoints/raw") \
-    .start()
-
-
-# 2. Scrittura aggregati
-df_avg = df_parsed \
+# ========== 1. Aggregazioni per ora ========== #
+df_agg = df_parsed \
     .withWatermark("timestamp", "2 minutes") \
     .groupBy(
-        window(col("timestamp"), "1 minute"),
+        window(col("timestamp"), WINDOW_DURATION),
         col("sensor_id")
-    ).agg(avg("temperature").alias("avg_temperature")) \
-    .select(
+    ).agg(
+        avg("temperature").alias("avg_temperature"),
+        avg("humidity").alias("avg_humidity"),
+        avg("gas").alias("avg_gas"),
+        max_("temperature").alias("max_temperature"),
+        max_("gas").alias("max_gas")
+    ).select(
         col("sensor_id"),
-        col("avg_temperature"),
         col("window.start").alias("window_start"),
-        col("window.end").alias("window_end")
+        col("window.end").alias("window_end"),
+        "avg_temperature", "avg_humidity", "avg_gas",
+        "max_temperature", "max_gas"
     )
 
-
-def write_avg_to_mysql(batch_df, batch_id):
-    # Scrive in staging
+def write_agg_to_mysql(batch_df, batch_id):
     batch_df.write \
         .format("jdbc") \
         .option("url", DB_URL) \
@@ -99,7 +84,6 @@ def write_avg_to_mysql(batch_df, batch_id):
         .mode("append") \
         .save()
 
-    # Chiama stored procedure
     import pymysql
     conn = pymysql.connect(
         host="mysql",
@@ -108,25 +92,92 @@ def write_avg_to_mysql(batch_df, batch_id):
         database="fireGuard360_db"
     )
     with conn.cursor() as cursor:
-        cursor.execute("CALL upsert_sensor_analysis();")
+        cursor.execute("CALL upsert_stats();")
     conn.commit()
     conn.close()
 
-df_avg.writeStream \
-    .foreachBatch(write_avg_to_mysql) \
+df_agg.writeStream \
+    .foreachBatch(write_agg_to_mysql) \
     .outputMode("update") \
-    .option("checkpointLocation", "/tmp/checkpoints/avg") \
+    .option("checkpointLocation", "/tmp/checkpoints/agg") \
     .start()
 
-# 3. Scrittura alert rischio incendio
+
+# ========== 2. Calcolo indice di rischio ========== #
+
+df_risk = df_agg.withColumn("risk_score",
+    (col("avg_temperature") * 0.4 + col("avg_gas") * 0.3 - col("avg_humidity") * 0.3)
+).withColumn("risk_level", 
+    when(col("risk_score") > 80, "critical")
+    .when(col("risk_score") > 60, "high")
+    .when(col("risk_score") > 40, "moderate")
+    .otherwise("low")
+).select(
+    col("sensor_id"),
+    col("risk_score"),
+    col("risk_level"),
+    col("window_end").alias("calculated_at")
+)
+
+def write_risk_to_mysql(batch_df, batch_id):
+    batch_df.write \
+        .format("jdbc") \
+        .option("url", DB_URL) \
+        .option("dbtable", TABLE_RISK_STAGING) \
+        .option("user", DB_USER) \
+        .option("password", DB_PASSWORD) \
+        .option("driver", DB_DRIVER) \
+        .mode("append") \
+        .save()
+
+    import pymysql
+    conn = pymysql.connect(
+        host="mysql",
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database="fireGuard360_db"
+    )
+    with conn.cursor() as cursor:
+        cursor.execute("CALL upsert_risk_index();")
+    conn.commit()
+    conn.close()
+
+df_risk.writeStream \
+    .foreachBatch(write_risk_to_mysql) \
+    .outputMode("update") \
+    .option("checkpointLocation", "/tmp/checkpoints/risk") \
+    .start()
+
+# ========== 3. Alert rischio elevato (multi-condizioni) ========== #
+
 df_alerts = df_parsed \
-    .filter((col("temperature") > 45) & (col("humidity") < 20)) \
-    .withColumn("alert_type", lit("High Fire Risk")) \
-    .withColumn("description", lit("Temperature > 45°C and Humidity < 20%")) \
+    .withColumn("alert_type",
+        when((col("temperature") > 55), "Extreme Heat")
+        .when((col("temperature") > 45) & (col("humidity") < 20), "High Fire Risk")
+        .when(col("gas") > 900, "Gas Concentration Alert")
+        .when(col("humidity") < 10, "Dry Environment")
+        .otherwise(None)
+    ) \
+    .withColumn("description",
+        when((col("temperature") > 55), "Temperature > 55°C")
+        .when((col("temperature") > 45) & (col("humidity") < 20), "Temperature > 45°C and Humidity < 20%")
+        .when(col("gas") > 900, "Gas levels exceed 900 PPM")
+        .when(col("humidity") < 10, "Humidity < 10%")
+        .otherwise(None)
+    ) \
+    .withColumn("severity",
+        when((col("temperature") > 55), "critical")
+        .when((col("temperature") > 45) & (col("humidity") < 20), "high")
+        .when(col("gas") > 900, "moderate")
+        .when(col("humidity") < 10, "low")
+        .otherwise(None)
+    ) \
+    .filter(col("alert_type").isNotNull()) \
     .select(
         col("sensor_id"),
         col("alert_type"),
         col("description"),
+        col("severity"),
         col("timestamp")
     )
 

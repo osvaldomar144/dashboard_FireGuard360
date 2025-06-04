@@ -1,0 +1,149 @@
+{% extends "layout_base.html" %}
+
+{% block extra_head %}
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+{% endblock %}
+
+
+{% block body %}
+
+{% import "_components/notifications.html" as notifications %}
+
+<div>
+  <!-- Sidebar -->
+  <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion" id="accordionSidebar">
+    <!-- Logo -->
+    <a class="sidebar-brand d-flex align-items-center justify-content-center my-3" href="{{ url_for('overview.index') }}">
+      <div class="sidebar-brand-icon">
+        <i class="fas fa-fire"></i>
+      </div>
+      <div class="sidebar-brand-text mx-3">FireGuard360</div>
+    </a>
+
+    <hr class="sidebar-divider my-0">
+
+    <!-- Dashboard -->
+    <li class="nav-item {% if request.endpoint == 'overview.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('overview.index') }}">
+        <i class="fas fa-fw fa-gauge-high"></i>
+        <span>Dashboard</span>
+      </a>
+    </li>
+
+    <hr class="sidebar-divider">
+    <div class="sidebar-heading text-white px-3">Sezioni</div>
+
+    <li class="nav-item {% if request.endpoint == 'drone.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('drone.index') }}">
+        <i class="fas fa-fw fa-helicopter"></i>
+        <span>Droni</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.endpoint == 'device.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('device.index') }}">
+        <i class="fas fa-fw fa-microchip"></i>
+        <span>Dispositivi</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.endpoint == 'alerts.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('alerts.index') }}">
+        <i class="fas fa-fw fa-bell"></i>
+        <span>Storico Allarmi</span>
+      </a>
+    </li>
+
+    <hr class="sidebar-divider">
+
+    <li class="nav-item mt-auto">
+      <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+        <i class="fas fa-fw fa-sign-out-alt"></i>
+        <span>Logout</span>
+      </a>
+    </li>
+  </ul>
+
+  <!-- Main Content -->
+  <div class="main-content d-flex flex-column flex-grow-1 bg-light">
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand navbar-light bg-white topbar shadow mb-4 px-4">
+      <ul class="navbar-nav ms-auto">
+        <li class="nav-item dropdown no-arrow">
+          <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown"
+             aria-haspopup="true" aria-expanded="false">
+            <span class="me-2 d-none d-lg-inline text-gray-600 small">{{ current_user.username }}</span>
+            <img class="img-profile rounded-circle" src="{{ url_for('static', filename='images/profile/undraw_profile.svg') }}">
+          </a>
+          <div class="dropdown-menu dropdown-menu-end shadow animated--grow-in" aria-labelledby="userDropdown">
+            <!--<a class="dropdown-item" href="#"><i class="fas fa-user fa-sm fa-fw me-2 text-gray-400"></i>Profilo</a>-->
+            <!--<a class="dropdown-item" href="#"><i class="fas fa-cogs fa-sm fa-fw me-2 text-gray-400"></i>Impostazioni</a>-->
+            <div class="dropdown-divider"></div>
+            <a class="dropdown-item" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+              <i class="fas fa-sign-out-alt fa-sm fa-fw me-2 text-gray-400"></i>Logout
+            </a>
+          </div>
+        </li>
+      </ul>
+    </nav>
+
+    <!-- Pagina principale -->
+    <div class="container-fluid px-4">
+      {{ notifications.render_notifications() }}
+      {% block content %}{% endblock %}
+    </div>
+  </div>
+</div>
+
+<!-- Logout Modal -->
+<div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content shadow">
+      <div class="modal-header">
+        <h5 class="modal-title" id="logoutModalLabel">Conferma Logout</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Chiudi"></button>
+      </div>
+      <div class="modal-body">Sei sicuro di voler uscire?</div>
+      <div class="modal-footer">
+        <button class="btn btn-info" data-bs-dismiss="modal">Annulla</button>
+        <a class="btn btn-danger" href="{{ url_for('auth.logout') }}">Esci</a>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<!-- Data Table -->
+  <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+  <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+
+  <!-- Export -->
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+  <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+  <script>
+    $(document).ready(function () {
+      $('table.datatable').each(function(){
+        $(this).DataTable({
+          responsive: true,
+          language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/it-IT.json'
+          },
+          dom: '<"d-flex justify-content-between align-items-center"lfB>rtip',
+          buttons: [
+            'copy', 'csv', 'excel', 'pdf', 'print'
+          ]
+        });
+      });
+    });
+  </script>
+
+{% endblock %}
+

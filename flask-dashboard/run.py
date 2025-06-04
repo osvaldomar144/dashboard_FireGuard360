@@ -5,9 +5,14 @@ from websocket import socketio
 from flask_login import LoginManager
 from auth.routes import auth_bp
 
+from utility.db import init_db
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = "fireguard360secretKey"
+
+    # Inizializza il DB
+    init_db(app)
 
     # Auth setup
     login_manager = LoginManager()
