@@ -4,7 +4,6 @@
 
 {% block content %}
 <div class="container-fluid">
-  <h2 class="mb-4 text-center">Drone Control Center</h2>
 
   <div class="row">
     <!-- Sezione Video e Dashboard -->
@@ -54,7 +53,7 @@
           <div class="row g-4">
             <!-- Video -->
             <div class="col-md-8">
-              <div class="ratio ratio-16x9 border rounded shadow-sm">
+              <div class="ratio ratio-16x9 border rounded shadow-sm" style="height: 100%;">
                 <img src="http://localhost:5010/video_feed" class="w-100 h-100" style="object-fit: cover;" alt="Streaming drone">
               </div>
             </div>
@@ -89,7 +88,7 @@
 
                 <!-- Log -->
                 <hr class="bg-light my-3">
-                <div class="small" style="max-height: 345px; overflow-y: auto;">
+                <div class="small" style="height: 250px; overflow-y: auto;">
                   <strong>Log:</strong>
                   <ul class="list-unstyled mb-0" id="commandLog">
                     <li class="text-muted">Nessun comando ancora</li>

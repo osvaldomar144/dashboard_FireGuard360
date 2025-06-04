@@ -1,6 +1,6 @@
 from flask import Flask
 from controllers import *
-from websocket import socketio
+from websocket.socketio import socketio
 
 from flask_login import LoginManager
 from auth.routes import auth_bp
