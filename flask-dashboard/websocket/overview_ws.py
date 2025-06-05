@@ -10,10 +10,10 @@ connected_clients = 0
 stop_event = Event()
 push_thread = None
 
-def serialize_alert(alert):
+def serialize_row(row):
     return {
         key: (value.strftime('%Y-%m-%d %H:%M') if isinstance(value, datetime.datetime) else value)
-        for key, value in alert.items()
+        for key, value in row.items()
     }
 
 class OverviewNamespace(Namespace):
@@ -43,14 +43,21 @@ class OverviewNamespace(Namespace):
             print("[WS] Nessun client attivo. Fermata del push.")
             stop_event.set()
 
-
 def periodic_alert_push(app):
     with app.app_context():
         while not stop_event.is_set():
             try:
+
+                # 1. Ultimi allarmi
                 alerts = exec_stored_procedure("get_latest_fire_alerts", [10])
-                serialized_alerts = [serialize_alert(alert) for alert in alerts]
+                serialized_alerts = [serialize_row(a) for a in alerts]
                 socketio.emit("update_alerts", serialized_alerts, namespace="/overview")
+
+                # 2. Ultimi valori per tipo di sensore (NULL -> tutti)
+                stats = exec_stored_procedure("get_latest_stats_per_sensor")
+                serialized_stats = [serialize_row(s) for s in stats]
+                socketio.emit("update_sensor_values", serialized_stats, namespace="/overview")
+
             except Exception as e:
                 print(f"[WS] Errore durante il push overview: {e}")
             time.sleep(5)
