@@ -1,3 +1,2 @@
-from flask_socketio import SocketIO
+from . import overview_ws, alerts_ws, device_details_ws
 
-socketio = SocketIO()

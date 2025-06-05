@@ -200,7 +200,7 @@ END //
 
 DELIMITER ;
 
--- Ultime medie aggregate per sensore
+-- Ultime medie aggregate per sensore TOCHECK
 DROP PROCEDURE IF EXISTS get_latest_sensor_stats;
 DELIMITER //
 
@@ -220,6 +220,25 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- Ultimo record di stats per ciascun sensore (senza parametri)
+DROP PROCEDURE IF EXISTS get_latest_stats_per_sensor;
+DELIMITER //
+
+CREATE PROCEDURE get_latest_stats_per_sensor()
+BEGIN
+    SELECT s.*
+    FROM sensor_stats s
+    INNER JOIN (
+        SELECT sensor_id, MAX(window_end) AS latest_window
+        FROM sensor_stats
+        GROUP BY sensor_id
+    ) latest
+    ON s.sensor_id = latest.sensor_id AND s.window_end = latest.latest_window;
+END //
+
+DELIMITER ;
+
 
 
 -- Storico indice di rischio per sensore

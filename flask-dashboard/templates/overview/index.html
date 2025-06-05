@@ -16,9 +16,9 @@
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-warning text-uppercase mb-1" id="titolo-temperatura">
-              Temperatura Attuale
+              Temperatura
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800" id="temperatura">Caricamento...</div>
+            <div class="h6 mb-0 font-weight-bold text-gray-800" id="temperatura">Caricamento...</div>
           </div>
           <div class="col-auto">
             <i class="fas fa-temperature-high fa-2x text-gray-300"></i>
@@ -35,9 +35,9 @@
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-info text-uppercase mb-1" id="titolo-umidita">
-              Umidità Attuale
+              Umidità
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800" id="umidita">Caricamento...</div>
+            <div class="h6 mb-0 font-weight-bold text-gray-800" id="umidita">Caricamento...</div>
           </div>
           <div class="col-auto">
             <i class="fas fa-tint fa-2x text-gray-300"></i>
@@ -54,9 +54,9 @@
         <div class="row no-gutters align-items-center">
           <div class="col mr-2">
             <div class="text-xs font-weight-bold text-success text-uppercase mb-1" id="titolo-fumo">
-              Fumo Attuale
+              Fumo
             </div>
-            <div class="h5 mb-0 font-weight-bold text-gray-800" id="fumo">Caricamento...</div>
+            <div class="h6 mb-0 font-weight-bold text-gray-800" id="fumo">Caricamento...</div>
           </div>
           <div class="col-auto">
             <i class="fas fa-smoking fa-2x text-gray-300"></i>
@@ -73,9 +73,14 @@
     <h6 class="m-0 font-weight-bold text-primary">Ultimi Allarmi</h6>
   </div>
   <div class="card-body">
-    {{ tables.render_table(['timestamp', 'sensor_id', 'alert_type', 'description', 'severity'], alert_rows) }}
+    {{ tables.render_table(['timestamp', 'sensor_id', 'alert_type', 'description', 'severity'], alert_rows, table_id="alerts-table") }}
   </div>
 </div>
 
 
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/overview.js') }}"></script>
 {% endblock %}
+
+
+
