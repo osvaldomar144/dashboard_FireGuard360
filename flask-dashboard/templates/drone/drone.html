@@ -163,23 +163,25 @@
     }
 
     // Pulsanti comandi
-    document.getElementById("startBtn").addEventListener("click", () => logCommand("DECOLLO"));
+    /*document.getElementById("startBtn").addEventListener("click", () => logCommand("DECOLLO"));
     document.getElementById("landBtn").addEventListener("click", () => logCommand("ATTERRAGGIO"));
     document.getElementById("upBtn").addEventListener("click", () => logCommand("VAI SU"));
     document.getElementById("downBtn").addEventListener("click", () => logCommand("VAI GIU"));
     document.getElementById("leftBtn").addEventListener("click", () => logCommand("VAI A SINISTRA"));
     document.getElementById("rightBtn").addEventListener("click", () => logCommand("VAI A DESTRA"));
     document.getElementById("rotateLeftBtn").addEventListener("click", () => logCommand("RUOTA SX"));
-    document.getElementById("rotateRightBtn").addEventListener("click", () => logCommand("RUOTA DX"));
+    document.getElementById("rotateRightBtn").addEventListener("click", () => logCommand("RUOTA DX"));*/
 
     // Simulazione automatica ogni 3 secondi
     setInterval(() => {
-      const battery = Math.floor(Math.random() * 101); // 0-100%
+      /*const battery = Math.floor(Math.random() * 101); // 0-100%
       const altitude = (Math.random() * 5).toFixed(1); // 0.0 - 5.0 m
-      const status = Math.random() > 0.2 ? "Connesso" : "Non connesso";
+      const status = Math.random() > 0.2 ? "Connesso" : "Non connesso";*/
+      const battery = 20;
+      const status = "Connesso";
 
       updateStatus("batteryLevel", battery + "%");
-      updateStatus("altitude", altitude + " m");
+      //updateStatus("altitude", altitude + " m");
       updateStatus("droneStatus", status);
     }, 3000);
   </script>

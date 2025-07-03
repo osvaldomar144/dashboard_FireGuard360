@@ -15,13 +15,10 @@ document.addEventListener("DOMContentLoaded", () => {
     ]
   });
 
-  socket.on("connect", () => {
-    console.log("[WS] Connesso al namespace /sensors");
-  });
+  lineChart = window["lineChart_chart"];
 
-  socket.on("disconnect", () => {
-    console.log("[WS] Disconnesso da /sensors");
-  });
+  socket.on("connect", () => console.log("[WS] Connesso al namespace /sensors"));
+  socket.on("disconnect", () => console.log("[WS] Disconnesso da /sensors"));
 
   socket.on("update_sensors", (data) => {
     dataTable.clear();
@@ -36,6 +33,19 @@ document.addEventListener("DOMContentLoaded", () => {
       ]);
     });
     dataTable.draw();
+
+
+    // Se il grafico esiste, aggiorna
+    if (lineChart) {
+      data.sort((a, b) => new Date(a.detected_at) - new Date(b.detected_at));
+      const labels = data.map(row => row.detected_at);
+      const values = data.map(row => row.temperature);
+
+      lineChart.data.labels = labels;
+      lineChart.data.datasets[0].data = values;
+      lineChart.update();
+    }
+
   });
     
 });

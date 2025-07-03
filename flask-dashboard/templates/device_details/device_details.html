@@ -1,5 +1,196 @@
 {% extends "layout_dashboard.html" %}
-{% block title %}Device Details{% endblock %}
+{% block title %}Controlli Dispositivi{% endblock %}
 {% block content %}
-    <h2>Controllo Dispositivi di Attuazione</h2>
+
+<!-- Danger Level -->
+<div class="row mb-4">
+  <div class="col">
+    <div id="danger-level-box" class="p-4 rounded shadow text-white text-center fs-4 fw-bold"
+         style="background-color: #28a745;">
+      Danger Level: <span id="danger-value">0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Controlli -->
+<div class="row g-4">
+  <!-- FINESTRE -->
+  <div class="col-md-6 col-lg-4">
+    <div id="card-windows" class="card shadow text-center border border-secondary">
+      <div class="card-body">
+        <i class="fa-solid fa-house-chimney-window fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Finestre (Servomotori)</h5>
+        <p class="card-text">Controllo apertura/chiusura finestre tramite servomotori.</p>
+        <span id="status-windows" class="badge bg-secondary mb-2">Disattivato</span><br>
+        <label class="switch">
+          <input type="checkbox" id="windows-toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pompa Gas -->
+  <div class="col-md-6 col-lg-4">
+    <div id="card-gas" class="card shadow text-center border border-secondary">
+      <div class="card-body">
+        <i class="fas fa-fire fa-3x text-danger mb-3"></i>
+        <h5 class="card-title">Pompa Gas</h5>
+        <p class="card-text">Simula apertura/chiusura della valvola del gas.</p>
+        <span id="status-gas" class="badge bg-secondary mb-2">Disattivato</span><br>
+        <label class="switch">
+          <input type="checkbox" id="gas-toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pompa Irrigazione -->
+  <div class="col-md-6 col-lg-4">
+    <div id="card-irrigazione" class="card shadow text-center border border-secondary">
+      <div class="card-body">
+        <i class="fas fa-water fa-3x text-success mb-3"></i>
+        <h5 class="card-title">Pompa Irrigazione</h5>
+        <p class="card-text">Attiva/disattiva l'irrigazione automatizzata.</p>
+        <span id="status-irrigazione" class="badge bg-secondary mb-2">Disattivato</span><br>
+        <label class="switch">
+          <input type="checkbox" id="irrigazione-toggle">
+          <span class="slider round"></span>
+        </label>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Simulatore 3D -->
+<div class="card shadow my-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Simulatore Casa 3D</h6>
+  </div>
+  <div class="card-body text-center">
+    <canvas id="renderCanvas" style="width: 100%; height: 500px;"></canvas>
+  </div>
+</div>
+
+
+<!-- CSS TOGGLE + VISUAL FEEDBACK -->
+<style>
+.switch {
+  position: relative;
+  display: inline-block;
+  width: 60px; height: 34px;
+}
+.switch input { display: none; }
+.slider {
+  position: absolute; cursor: pointer;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background-color: #ccc;
+  transition: .4s; border-radius: 34px;
+}
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 26px; width: 26px;
+  left: 4px; bottom: 4px;
+  background-color: white;
+  transition: .4s; border-radius: 50%;
+}
+input:checked + .slider {
+  background-color: #28a745;
+}
+input:checked + .slider:before {
+  transform: translateX(26px);
+}
+</style>
+
+<!-- JavaScript Stati -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const controls = [
+    { toggle: "windows-toggle", card: "card-windows", badge: "status-windows" },
+    { toggle: "gas-toggle", card: "card-gas", badge: "status-gas" },
+    { toggle: "irrigazione-toggle", card: "card-irrigazione", badge: "status-irrigazione" },
+  ];
+
+  controls.forEach(({ toggle, card, badge }) => {
+    const toggleEl = document.getElementById(toggle);
+    const cardEl = document.getElementById(card);
+    const badgeEl = document.getElementById(badge);
+
+    toggleEl.addEventListener("change", () => {
+      const isOn = toggleEl.checked;
+      cardEl.classList.remove("border-success", "border-danger", "border-secondary");
+      badgeEl.classList.remove("bg-success", "bg-danger", "bg-secondary");
+
+      if (isOn) {
+        cardEl.classList.add("border-success");
+        badgeEl.classList.add("bg-success");
+        badgeEl.textContent = "Attivato";
+      } else {
+        cardEl.classList.add("border-danger");
+        badgeEl.classList.add("bg-danger");
+        badgeEl.textContent = "Disattivato";
+      }
+    });
+  });
+
+  // Simulazione Danger Level (da backend con WebSocket o AJAX in futuro)
+  const dangerBox = document.getElementById("danger-level-box");
+  const dangerValue = document.getElementById("danger-value");
+
+  const updateDangerLevel = (value) => {
+    dangerValue.textContent = value;
+    if (value == 0) dangerBox.style.backgroundColor = "#28a745";
+    else if (value == 1) dangerBox.style.backgroundColor = "#ffc107";
+    else dangerBox.style.backgroundColor = "#dc3545";
+  };
+
+  // Prova con un valore random
+  updateDangerLevel(0); // Puoi cambiare qui a 1 o 2 per test
+});
+</script>
+
+
+<!-- BabylonJS + STL Loader -->
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("renderCanvas");
+  const engine = new BABYLON.Engine(canvas, true);
+  const scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+
+  const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 3, 10, BABYLON.Vector3.Zero(), scene);
+  camera.attachControl(canvas, true);
+  camera.wheelDeltaPercentage = 0.01;
+
+  const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
+  light.intensity = 0.9;
+
+  BABYLON.SceneLoader.ImportMesh(null, "/static/models/", "casa.stl", scene, function(meshes) {
+    const model = meshes[0];
+    model.scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
+    model.position = BABYLON.Vector3.Zero();
+
+    // Auto-centramento
+    const boundingInfo = model.getBoundingInfo();
+    const center = boundingInfo.boundingBox.centerWorld;
+    model.position = model.position.subtract(center);
+
+    scene.createDefaultCameraOrLight(true, true, true);
+  });
+
+  engine.runRenderLoop(() => {
+    scene.render();
+  });
+
+  window.addEventListener("resize", () => {
+    engine.resize();
+  });
+});
+</script>
+
 {% endblock %}
