@@ -34,7 +34,12 @@
     <h6 class="m-0 font-weight-bold text-primary">Storico Allarmi</h6>
   </div>
   <div class="card-body">
-    {{ tables.render_table(['timestamp', 'sensor_id', 'alert_type', 'description', 'severity'], alert_rows, table_id="alerts-table") }}
+    {{ tables.render_table([
+                          ('timestamp', 'Timestamp'), 
+                          ('sensor_id', 'Modulo'),
+                          ('alert_type', 'Tipo Alarme'), 
+                          ('description', 'Descrizione'), 
+                          ('severity', 'Gravità')], alert_rows, table_id="alerts-table") }}
   </div>
 </div>
 

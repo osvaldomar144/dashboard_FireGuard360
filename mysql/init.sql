@@ -143,6 +143,50 @@ CREATE TABLE IF NOT EXISTS users (
 );
 
 -- ========================================================================================
+-- 6. DATI GREZZI SENSORI (RAW)
+-- ========================================================================================
+
+-- Tabella dati grezzi con campo danger_value
+CREATE TABLE IF NOT EXISTS raw_sensor_data (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    sensor_id VARCHAR(50) NOT NULL,
+    temperature FLOAT,
+    humidity FLOAT,
+    gas FLOAT,
+    danger_value FLOAT, -- calcolato o derivato
+    detected_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_sensor_time (sensor_id, detected_at)
+);
+
+-- Tabella di STAGING per Spark (senza ID auto-incrementale)
+CREATE TABLE IF NOT EXISTS raw_sensor_data_staging (
+    sensor_id VARCHAR(50) NOT NULL,
+    temperature FLOAT,
+    humidity FLOAT,
+    gas FLOAT,
+    danger_value FLOAT,
+    detected_at DATETIME NOT NULL
+);
+
+-- Stored Procedure per upsert (append raw data)
+DROP PROCEDURE IF EXISTS insert_raw_sensor_data;
+DELIMITER //
+
+CREATE PROCEDURE insert_raw_sensor_data()
+BEGIN
+    INSERT INTO raw_sensor_data (
+        sensor_id, temperature, humidity, gas, danger_value, detected_at
+    )
+    SELECT
+        sensor_id, temperature, humidity, gas, danger_value, detected_at
+    FROM raw_sensor_data_staging;
+
+    TRUNCATE TABLE raw_sensor_data_staging;
+END //
+
+DELIMITER ;
+
+-- ========================================================================================
 --                          ALL STORED PROCEDURES
 -- ========================================================================================
 
@@ -342,3 +386,27 @@ END //
 
 DELIMITER ;
 
+-- ========================================================================================
+-- Stored Procedure per ottenere i dati grezzi
+-- ========================================================================================
+DROP PROCEDURE IF EXISTS get_raw_sensor_data;
+DELIMITER //
+
+CREATE PROCEDURE get_raw_sensor_data(
+    IN sensor_id_param VARCHAR(50),
+    IN start_date DATETIME,
+    IN end_date DATETIME
+)
+BEGIN
+    SELECT *
+    FROM raw_sensor_data
+    WHERE 
+        (sensor_id_param IS NULL OR sensor_id = sensor_id_param)
+        AND detected_at BETWEEN 
+            IFNULL(start_date, CURDATE()) 
+            AND 
+            IFNULL(end_date, DATE_ADD(CURDATE(), INTERVAL 1 DAY))
+    ORDER BY detected_at DESC;
+END //
+
+DELIMITER ;

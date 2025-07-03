@@ -10,7 +10,7 @@ import traceback
 
 # === CONFIG ===
 # USE_SIMULATION = os.environ.get("USE_SIMULATION", "true").lower() == "true"
-USE_SIMULATION = False
+USE_SIMULATION = True
 SIMULATION_SOURCE = os.environ.get("SIMULATION_SOURCE", "fire.mp4")
 YOLO_MODEL_PATH = os.environ.get("YOLO_MODEL_PATH", "best.pt")
 FRAME_WIDTH = int(os.environ.get("FRAME_WIDTH", 1280))
