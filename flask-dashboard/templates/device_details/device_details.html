@@ -1,5 +1,141 @@
 {% extends "layout_dashboard.html" %}
-{% block title %}Device Details{% endblock %}
+{% block title %}Controlli Dispositivi{% endblock %}
 {% block content %}
-    <h2>Device Details</h2>
+
+<link rel="stylesheet" href="{{ url_for('static', filename='css/device_details.css') }}">
+
+<!-- Danger Level -->
+<div class="row mb-3">
+  <div class="col">
+    <div id="danger-level-box" class="p-3 rounded shadow text-white text-center fs-4 fw-bold"
+         style="background-color: #28a745;">
+      Danger Level: <span id="danger-value">0</span>
+    </div>
+  </div>
+</div>
+
+<!-- Notifica -->
+<div id="command-alert" class="custom-alert alert d-none">
+  <span id="command-alert-message"></span>
+</div>
+
+<!-- Controlli -->
+<div class="row g-4">
+  <!-- FINESTRE -->
+  <div class="col-md-6 col-lg-4">
+    <div id="card-windows" class="card shadow text-center border border-secondary">
+      <div class="card-body">
+        <i class="fa-solid fa-house-chimney-window fa-3x text-primary mb-3"></i>
+        <h5 class="card-title">Finestre (Servomotori)</h5>
+        <p class="card-text">Invia comando per apertura/chiusura finestre.</p>
+        <button class="btn btn-primary btn-lg rounded-pill shadow command-btn" data-command="4D">
+          <i class="fas fa-paper-plane me-2"></i>Invia Comando
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pompa Gas -->
+  <div class="col-md-6 col-lg-4">
+    <div id="card-gas" class="card shadow text-center border border-secondary">
+      <div class="card-body">
+        <i class="fas fa-fire fa-3x text-danger mb-3"></i>
+        <h5 class="card-title">Pompa Gas</h5>
+        <p class="card-text">Invia comando per attivare/disattivare gas.</p>
+        <button class="btn btn-danger btn-lg rounded-pill shadow command-btn" data-command="5D">
+          <i class="fas fa-burn me-2"></i>Invia Comando
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Pompa Irrigazione -->
+  <div class="col-md-6 col-lg-4">
+    <div id="card-irrigazione" class="card shadow text-center border border-secondary">
+      <div class="card-body">
+        <i class="fas fa-water fa-3x text-success mb-3"></i>
+        <h5 class="card-title">Pompa Irrigazione</h5>
+        <p class="card-text">Invia comando per irrigazione.</p>
+        <button class="btn btn-success btn-lg rounded-pill shadow command-btn" data-command="6D">
+          <i class="fas fa-play me-2"></i>Invia Comando
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<!-- Simulatore 3D -->
+<div class="card shadow my-4">
+  <div class="card-header py-3">
+    <h6 class="m-0 font-weight-bold text-primary">Simulatore Casa 3D</h6>
+  </div>
+  <div class="card-body text-center">
+    <canvas id="renderCanvas" style="width: 100%; height: 500px;"></canvas>
+  </div>
+</div>
+
+<!-- JavaScript Stati -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  // Simulazione Danger Level (da backend con WebSocket o AJAX in futuro)
+  const dangerBox = document.getElementById("danger-level-box");
+  const dangerValue = document.getElementById("danger-value");
+
+  const updateDangerLevel = (value) => {
+    dangerValue.textContent = value;
+    if (value == 0) dangerBox.style.backgroundColor = "#28a745";
+    else if (value == 1) dangerBox.style.backgroundColor = "#ffc107";
+    else dangerBox.style.backgroundColor = "#dc3545";
+  };
+
+  // Prova con un valore random
+  updateDangerLevel(0); // Puoi cambiare qui a 1 o 2 per test
+});
+</script>
+
+
+<!-- BabylonJS + STL Loader -->
+<script src="https://cdn.babylonjs.com/babylon.js"></script>
+<script src="https://cdn.babylonjs.com/loaders/babylonjs.loaders.min.js"></script>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const canvas = document.getElementById("renderCanvas");
+  const engine = new BABYLON.Engine(canvas, true);
+  const scene = new BABYLON.Scene(engine);
+  scene.clearColor = new BABYLON.Color3(0.95, 0.95, 0.95);
+
+  const camera = new BABYLON.ArcRotateCamera("Camera", Math.PI / 2, Math.PI / 3, 10, BABYLON.Vector3.Zero(), scene);
+  camera.attachControl(canvas, true);
+  camera.wheelDeltaPercentage = 0.01;
+
+  const light = new BABYLON.HemisphericLight("light1", new BABYLON.Vector3(1, 1, 0), scene);
+  light.intensity = 0.9;
+
+  BABYLON.SceneLoader.ImportMesh(null, "/static/models/", "casa.stl", scene, function(meshes) {
+    const model = meshes[0];
+    model.scaling = new BABYLON.Vector3(0.05, 0.05, 0.05);
+    model.position = BABYLON.Vector3.Zero();
+
+    // Auto-centramento
+    const boundingInfo = model.getBoundingInfo();
+    const center = boundingInfo.boundingBox.centerWorld;
+    model.position = model.position.subtract(center);
+
+    scene.createDefaultCameraOrLight(true, true, true);
+  });
+
+  engine.runRenderLoop(() => {
+    scene.render();
+  });
+
+  window.addEventListener("resize", () => {
+    engine.resize();
+  });
+});
+</script>
+
+<script src="{{ url_for('static', filename='js/device_details.js') }}"></script>
+
 {% endblock %}

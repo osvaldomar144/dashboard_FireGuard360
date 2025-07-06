@@ -48,19 +48,19 @@ def periodic_alert_push(app):
         while not stop_event.is_set():
             try:
 
-                # 1. Ultimi allarmi
-                alerts = exec_stored_procedure("get_latest_fire_alerts", [10])
-                serialized_alerts = [serialize_row(a) for a in alerts]
-                socketio.emit("update_alerts", serialized_alerts, namespace="/overview")
-
-                # 2. Ultimi valori per tipo di sensore (NULL -> tutti)
+                # 1. Ultimi valori per tipo di sensore (NULL -> tutti)
                 stats = exec_stored_procedure("get_latest_stats_per_sensor")
                 serialized_stats = [serialize_row(s) for s in stats]
                 socketio.emit("update_sensor_values", serialized_stats, namespace="/overview")
 
+                # 2. Ultimi allarmi
+                alerts = exec_stored_procedure("get_latest_fire_alerts", [10])
+                serialized_alerts = [serialize_row(a) for a in alerts]
+                socketio.emit("update_alerts", serialized_alerts, namespace="/overview")
+
             except Exception as e:
                 print(f"[WS] Errore durante il push overview: {e}")
-            time.sleep(5)
+            time.sleep(3)
 
 # Registra il namespace
 socketio.on_namespace(OverviewNamespace("/overview"))

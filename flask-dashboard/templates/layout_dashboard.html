@@ -27,24 +27,17 @@
     <li class="nav-item {% if request.endpoint == 'overview.index' %}active{% endif %}">
       <a class="nav-link" href="{{ url_for('overview.index') }}">
         <i class="fas fa-fw fa-gauge-high"></i>
-        <span>Dashboard</span>
+        <span>Overview</span>
       </a>
     </li>
 
     <hr class="sidebar-divider">
     <div class="sidebar-heading text-white px-3">Sezioni</div>
 
-    <li class="nav-item {% if request.endpoint == 'drone.index' %}active{% endif %}">
-      <a class="nav-link" href="{{ url_for('drone.index') }}">
-        <i class="fas fa-fw fa-helicopter"></i>
-        <span>Droni</span>
-      </a>
-    </li>
-
-    <li class="nav-item {% if request.endpoint == 'device.index' %}active{% endif %}">
-      <a class="nav-link" href="{{ url_for('device.index') }}">
-        <i class="fas fa-fw fa-microchip"></i>
-        <span>Dispositivi</span>
+    <li class="nav-item {% if request.endpoint == 'sensors.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('sensors.index') }}">
+        <i class="fas fa-fw fa-list"></i>
+        <span>Storico Dati</span>
       </a>
     </li>
 
@@ -52,6 +45,20 @@
       <a class="nav-link" href="{{ url_for('alerts.index') }}">
         <i class="fas fa-fw fa-bell"></i>
         <span>Storico Allarmi</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.endpoint == 'device.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('device.index') }}">
+        <i class="fas fa-fw fa-microchip"></i>
+        <span>Controlli</span>
+      </a>
+    </li>
+
+    <li class="nav-item {% if request.endpoint == 'drone.index' %}active{% endif %}">
+      <a class="nav-link" href="{{ url_for('drone.index') }}">
+        <i class="fas fa-fw fa-helicopter"></i>
+        <span>Drone</span>
       </a>
     </li>
 
@@ -127,6 +134,11 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
   <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- Plugin Zoom -->
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.umd.min.js"></script>
 
   <!--<script>
     $(document).ready(function () {

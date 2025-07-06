@@ -29,6 +29,7 @@ def create_app():
     app.register_blueprint(AlertsBlueprint)
     app.register_blueprint(DroneBlueprint)
     app.register_blueprint(DeviceDetailsBlueprint)
+    app.register_blueprint(SensorsBlueprint)
     app.register_blueprint(auth_bp)
 
     socketio.init_app(app)

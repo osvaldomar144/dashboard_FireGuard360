@@ -20,11 +20,11 @@ class OverviewNamespace(Namespace):
     def on_connect(self):
         global connected_clients, push_thread
         connected_clients += 1
-        print(f"[WS] Client connesso a /alerts. Totale: {connected_clients}")
+        print(f"[WS] Client connesso a /sensors. Totale: {connected_clients}")
 
         if connected_clients == 1:
             # Primo client -> avvia il push
-            print("[WS] Avvio del push periodico alerts.")
+            print("[WS] Avvio del push periodico sensors.")
             stop_event.clear()
             push_thread = Thread(
                 target=periodic_alert_push, 
@@ -36,7 +36,7 @@ class OverviewNamespace(Namespace):
     def on_disconnect(self):
         global connected_clients
         connected_clients -= 1
-        print(f"[WS] Client disconnesso da /alerts. Totale: {connected_clients}")
+        print(f"[WS] Client disconnesso da /sensors. Totale: {connected_clients}")
 
         if connected_clients == 0:
             # Ultimo client -> stoppa il push
@@ -48,14 +48,17 @@ def periodic_alert_push(app):
         while not stop_event.is_set():
             try:
 
-                # 2. Ultimi allarmi
-                alerts = exec_stored_procedure("get_latest_fire_alerts", [100])
-                serialized_alerts = [serialize_row(a) for a in alerts]
-                socketio.emit("update_alerts", serialized_alerts, namespace="/alerts")
+                # Dati moduli periferici
+                sensors = exec_stored_procedure("get_raw_sensor_data", [None, None, None])
+
+                print(f"[WS] sensors: {sensors}")
+
+                serialized_sensors = [serialize_row(a) for a in sensors]
+                socketio.emit("update_sensors", serialized_sensors, namespace="/sensors")
 
             except Exception as e:
                 print(f"[WS] Errore durante il push alerts: {e}")
             time.sleep(3)
 
 # Registra il namespace
-socketio.on_namespace(OverviewNamespace("/alerts"))
+socketio.on_namespace(OverviewNamespace("/sensors"))

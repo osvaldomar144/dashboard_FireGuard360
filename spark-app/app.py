@@ -1,6 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import from_json, col, window, avg, to_timestamp, lit, when, max as max_
-from pyspark.sql.types import StructType, StringType, FloatType, TimestampType
+from pyspark.sql.types import StructType, StringType, FloatType, TimestampType, IntegerType
 from dotenv import load_dotenv
 import os
 
@@ -14,6 +14,7 @@ DB_DRIVER = os.getenv("DB_DRIVER")
 TABLE_AGG_STAGING = os.getenv("TABLE_AGG_STAGING")
 TABLE_RISK_STAGING = os.getenv("TABLE_RISK_STAGING")
 TABLE_RISK_HISTORY = os.getenv("TABLE_RISK_HISTORY")
+TABLE_RAW_STAGING = os.getenv("TABLE_RAW_STAGING")
 WINDOW_DURATION = os.getenv("AGG_WINDOW_DURATION", "5 minutes")
 
 # variabili di configurazione per KAFKA
@@ -31,7 +32,8 @@ schema = StructType() \
     .add("humidity", FloatType()) \
     .add("gas", FloatType()) \
     .add("sensor_id", StringType()) \
-    .add("timestamp", TimestampType())
+    .add("timestamp", TimestampType()) \
+    .add("danger_value", IntegerType())
 
 # Inizializza Spark
 spark = SparkSession.builder \
@@ -200,6 +202,41 @@ df_alerts.writeStream \
     .option("checkpointLocation", "/tmp/checkpoints/alerts") \
     .start()
 
+# ========== 4. Scrittura dati grezzi su raw_sensor_data ========== #
+
+def write_raw_to_mysql(batch_df, batch_id):
+    batch_df.select(
+        "sensor_id", "temperature", "humidity", "gas", "danger_value", "timestamp"
+    ).withColumnRenamed("timestamp", "detected_at") \
+     .write \
+     .format("jdbc") \
+     .option("url", DB_URL) \
+     .option("dbtable", TABLE_RAW_STAGING) \
+     .option("user", DB_USER) \
+     .option("password", DB_PASSWORD) \
+     .option("driver", DB_DRIVER) \
+     .mode("append") \
+     .save()
+
+    import pymysql
+    conn = pymysql.connect(
+        host="mysql",
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database="fireGuard360_db"
+    )
+    with conn.cursor() as cursor:
+        cursor.execute("CALL insert_raw_sensor_data();")
+    conn.commit()
+    conn.close()
+
+df_parsed \
+    .filter(col("danger_value").isNotNull()) \
+    .writeStream \
+    .foreachBatch(write_raw_to_mysql) \
+    .outputMode("append") \
+    .option("checkpointLocation", "/tmp/checkpoints/raw") \
+    .start()
 
 # Avvia tutti i flussi
 spark.streams.awaitAnyTermination()

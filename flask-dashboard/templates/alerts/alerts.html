@@ -5,17 +5,44 @@
 {% block title %}Storico Allarmi{% endblock %}
 
 {% block content %}
-<h2>Storico Allarmi</h2>
+
+<div class="card shadow mb-3 p-3">
+  <form class="row g-3 needs-validation" novalidate>
+    <div class="col-md-6 position-relative">
+      <label for="validationTooltip01" class="form-label">Da:</label>
+      <input type="datetime-local" class="form-control" id="validationTooltip01" required>
+      <div class="valid-tooltip">
+        Looks good!
+      </div>
+    </div>
+    <div class="col-md-6 position-relative">
+      <label for="validationTooltip02" class="form-label">A:</label>
+      <input type="datetime-local" class="form-control" id="validationTooltip02" required>
+      <div class="valid-tooltip">
+        Looks good!
+      </div>
+    </div>
+    <div class="col-md-12 position-relative">
+      <button class="btn btn-primary" type="submit">Invia</button>
+    </div>
+  </form>
+</div>
 
 <!-- Ultimi Allarmi -->
 <div class="card shadow mb-4">
   <div class="card-header py-3">
-    <h6 class="m-0 font-weight-bold text-primary">Lista Allarmi</h6>
+    <h6 class="m-0 font-weight-bold text-primary">Storico Allarmi</h6>
   </div>
   <div class="card-body">
-    {{ tables.render_table(['Timestamp', 'Descrizione'], alert_rows) }}
+    {{ tables.render_table([
+                          ('timestamp', 'Timestamp'), 
+                          ('sensor_id', 'Modulo'),
+                          ('alert_type', 'Tipo Alarme'), 
+                          ('description', 'Descrizione'), 
+                          ('severity', 'Gravità')], alert_rows, table_id="alerts-table") }}
   </div>
 </div>
 
-
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script src="{{ url_for('static', filename='js/alerts.js') }}"></script>
 {% endblock %}
