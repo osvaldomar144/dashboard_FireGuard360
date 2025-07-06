@@ -1,0 +1,28 @@
+.custom-alert {
+  position: fixed;
+  top: -100px;
+  left: 55%;
+  transform: translateX(-45%);
+  background-color: #28a745;
+  color: white;
+  font-weight: bold;
+  padding: 15px 25px;
+  border-radius: 10px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+  z-index: 9999;
+  transition: top 0.5s ease, opacity 0.5s ease;
+  opacity: 0;
+}
+
+.custom-alert.alert-danger {
+  background-color: #dc3545;
+}
+
+.custom-alert.alert-success {
+  background-color: #28a745;
+}
+
+.custom-alert.show {
+  top: 70px;
+  opacity: 1;
+}

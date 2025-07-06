@@ -1,13 +1,18 @@
 from flask import Flask
 from controllers import *
-from websocket import socketio
+from websocket.socketio import socketio
 
 from flask_login import LoginManager
 from auth.routes import auth_bp
 
+from utility.db import init_db
+
 def create_app():
     app = Flask(__name__)
     app.secret_key = "fireguard360secretKey"
+
+    # Inizializza il DB
+    init_db(app)
 
     # Auth setup
     login_manager = LoginManager()
@@ -24,6 +29,7 @@ def create_app():
     app.register_blueprint(AlertsBlueprint)
     app.register_blueprint(DroneBlueprint)
     app.register_blueprint(DeviceDetailsBlueprint)
+    app.register_blueprint(SensorsBlueprint)
     app.register_blueprint(auth_bp)
 
     socketio.init_app(app)

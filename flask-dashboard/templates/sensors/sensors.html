@@ -1,0 +1,111 @@
+{% extends "layout_dashboard.html" %}
+{% import "_components/table_macros.html" as tables %}
+{% import "_components/linear_chart_macros.html" as charts %}
+{% block title %}Device Details{% endblock %}
+{% block content %}
+
+    <div class="card shadow mb-3 p-3">
+    <form class="row g-3 needs-validation" novalidate>
+        <div class="col-md-6 position-relative">
+        <label for="validationTooltip01" class="form-label">Da:</label>
+        <input type="datetime-local" class="form-control" id="validationTooltip01" required>
+        <div class="valid-tooltip">
+            Looks good!
+        </div>
+        </div>
+        <div class="col-md-6 position-relative">
+        <label for="validationTooltip02" class="form-label">A:</label>
+        <input type="datetime-local" class="form-control" id="validationTooltip02" required>
+        <div class="valid-tooltip">
+            Looks good!
+        </div>
+        </div>
+        <div class="col-md-12 position-relative">
+        <button class="btn btn-primary" type="submit">Invia</button>
+        </div>
+    </form>
+    </div>
+
+    <!-- Table Storico Dati Sensori -->
+    <div class="card shadow mb-4">
+        <div class="card-header py-3">
+            <h6 class="m-0 font-weight-bold text-primary">Storico Dati Moduli Periferici</h6>
+        </div>
+        <div class="card-body">
+            {{ tables.render_table(  [
+                                    ('detected_at', 'Data Rilevazione'),
+                                    ('sensor_id', 'Modulo'),
+                                    ('temperature', 'Temperatura (°C)'),
+                                    ('humidity', 'Umidità (%)'),
+                                    ('gas', 'Gas (ppm)'),
+                                    ('danger_value', 'Danger Value')
+                                ], sensors_rows, table_id="sensors-table") }}
+        </div>
+    </div>
+
+
+
+    
+<div class="row">
+  <div class="col-md-6">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Temperatura Media</h6>
+      </div>
+      <div class="card-body">
+        {{ charts.render_multi_line_chart(
+        chart_id="chartTemp",
+        labels=temp_data.labels,
+        datasets=temp_data.datasets,
+        y_label="Temperatura (°C)",
+        height="300px",
+        title="Andamento Temperatura per Sensore"
+        ) }}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Umidità Media</h6>
+      </div>
+      <div class="card-body">
+        {{ charts.render_multi_line_chart(
+        chart_id="chartUmi",
+        labels=hum_data.labels,
+        datasets=hum_data.datasets,
+        y_label="Umidità (%)",
+        height="300px",
+        title="Andamento Umidità per Sensore"
+        ) }}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-6">
+    <div class="card shadow mb-4">
+      <div class="card-header py-3">
+        <h6 class="m-0 font-weight-bold text-primary">Gas Media</h6>
+      </div>
+      <div class="card-body">
+        {{ charts.render_multi_line_chart(
+        chart_id="chartGas",
+        labels=gas_data.labels,
+        datasets=gas_data.datasets,
+        y_label="Gas (ppm)",
+        height="300px",
+        title="Andamento Gas per Sensore"
+        ) }}
+      </div>
+    </div>
+  </div>
+
+</div>
+    
+
+
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <script src="{{ url_for('static', filename='js/sensors.js') }}"></script>
+{% endblock %}
