@@ -2,14 +2,21 @@
 {% block title %}Controlli Dispositivi{% endblock %}
 {% block content %}
 
+<link rel="stylesheet" href="{{ url_for('static', filename='css/device_details.css') }}">
+
 <!-- Danger Level -->
-<div class="row mb-4">
+<div class="row mb-3">
   <div class="col">
-    <div id="danger-level-box" class="p-4 rounded shadow text-white text-center fs-4 fw-bold"
+    <div id="danger-level-box" class="p-3 rounded shadow text-white text-center fs-4 fw-bold"
          style="background-color: #28a745;">
       Danger Level: <span id="danger-value">0</span>
     </div>
   </div>
+</div>
+
+<!-- Notifica -->
+<div id="command-alert" class="custom-alert alert d-none">
+  <span id="command-alert-message"></span>
 </div>
 
 <!-- Controlli -->
@@ -20,12 +27,10 @@
       <div class="card-body">
         <i class="fa-solid fa-house-chimney-window fa-3x text-primary mb-3"></i>
         <h5 class="card-title">Finestre (Servomotori)</h5>
-        <p class="card-text">Controllo apertura/chiusura finestre tramite servomotori.</p>
-        <span id="status-windows" class="badge bg-secondary mb-2">Disattivato</span><br>
-        <label class="switch">
-          <input type="checkbox" id="windows-toggle">
-          <span class="slider round"></span>
-        </label>
+        <p class="card-text">Invia comando per apertura/chiusura finestre.</p>
+        <button class="btn btn-primary btn-lg rounded-pill shadow command-btn" data-command="4D">
+          <i class="fas fa-paper-plane me-2"></i>Invia Comando
+        </button>
       </div>
     </div>
   </div>
@@ -36,12 +41,10 @@
       <div class="card-body">
         <i class="fas fa-fire fa-3x text-danger mb-3"></i>
         <h5 class="card-title">Pompa Gas</h5>
-        <p class="card-text">Simula apertura/chiusura della valvola del gas.</p>
-        <span id="status-gas" class="badge bg-secondary mb-2">Disattivato</span><br>
-        <label class="switch">
-          <input type="checkbox" id="gas-toggle">
-          <span class="slider round"></span>
-        </label>
+        <p class="card-text">Invia comando per attivare/disattivare gas.</p>
+        <button class="btn btn-danger btn-lg rounded-pill shadow command-btn" data-command="5D">
+          <i class="fas fa-burn me-2"></i>Invia Comando
+        </button>
       </div>
     </div>
   </div>
@@ -52,16 +55,15 @@
       <div class="card-body">
         <i class="fas fa-water fa-3x text-success mb-3"></i>
         <h5 class="card-title">Pompa Irrigazione</h5>
-        <p class="card-text">Attiva/disattiva l'irrigazione automatizzata.</p>
-        <span id="status-irrigazione" class="badge bg-secondary mb-2">Disattivato</span><br>
-        <label class="switch">
-          <input type="checkbox" id="irrigazione-toggle">
-          <span class="slider round"></span>
-        </label>
+        <p class="card-text">Invia comando per irrigazione.</p>
+        <button class="btn btn-success btn-lg rounded-pill shadow command-btn" data-command="6D">
+          <i class="fas fa-play me-2"></i>Invia Comando
+        </button>
       </div>
     </div>
   </div>
 </div>
+
 
 <!-- Simulatore 3D -->
 <div class="card shadow my-4">
@@ -73,68 +75,9 @@
   </div>
 </div>
 
-
-<!-- CSS TOGGLE + VISUAL FEEDBACK -->
-<style>
-.switch {
-  position: relative;
-  display: inline-block;
-  width: 60px; height: 34px;
-}
-.switch input { display: none; }
-.slider {
-  position: absolute; cursor: pointer;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background-color: #ccc;
-  transition: .4s; border-radius: 34px;
-}
-.slider:before {
-  position: absolute;
-  content: "";
-  height: 26px; width: 26px;
-  left: 4px; bottom: 4px;
-  background-color: white;
-  transition: .4s; border-radius: 50%;
-}
-input:checked + .slider {
-  background-color: #28a745;
-}
-input:checked + .slider:before {
-  transform: translateX(26px);
-}
-</style>
-
 <!-- JavaScript Stati -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  const controls = [
-    { toggle: "windows-toggle", card: "card-windows", badge: "status-windows" },
-    { toggle: "gas-toggle", card: "card-gas", badge: "status-gas" },
-    { toggle: "irrigazione-toggle", card: "card-irrigazione", badge: "status-irrigazione" },
-  ];
-
-  controls.forEach(({ toggle, card, badge }) => {
-    const toggleEl = document.getElementById(toggle);
-    const cardEl = document.getElementById(card);
-    const badgeEl = document.getElementById(badge);
-
-    toggleEl.addEventListener("change", () => {
-      const isOn = toggleEl.checked;
-      cardEl.classList.remove("border-success", "border-danger", "border-secondary");
-      badgeEl.classList.remove("bg-success", "bg-danger", "bg-secondary");
-
-      if (isOn) {
-        cardEl.classList.add("border-success");
-        badgeEl.classList.add("bg-success");
-        badgeEl.textContent = "Attivato";
-      } else {
-        cardEl.classList.add("border-danger");
-        badgeEl.classList.add("bg-danger");
-        badgeEl.textContent = "Disattivato";
-      }
-    });
-  });
-
   // Simulazione Danger Level (da backend con WebSocket o AJAX in futuro)
   const dangerBox = document.getElementById("danger-level-box");
   const dangerValue = document.getElementById("danger-value");
@@ -192,5 +135,7 @@ window.addEventListener("DOMContentLoaded", () => {
   });
 });
 </script>
+
+<script src="{{ url_for('static', filename='js/device_details.js') }}"></script>
 
 {% endblock %}

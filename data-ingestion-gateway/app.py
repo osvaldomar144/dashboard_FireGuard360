@@ -1,4 +1,5 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 from kafka import KafkaProducer
 from kafka.errors import NoBrokersAvailable
 import serial
@@ -6,9 +7,10 @@ import json
 import time
 
 app = Flask(__name__)
+CORS(app)
 
 # === CONFIG ===
-SERIAL_PORT = 'COM9'
+SERIAL_PORT = 'COM10'
 BAUD_RATE = 9600
 
 # === SERIAL SETUP ===
