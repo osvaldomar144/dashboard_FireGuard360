@@ -174,3 +174,5 @@ cython_debug/
 .pypirc
 
 .DS_Store
+
+data-ingestion-gateway/.venv-ingestion-gateway/

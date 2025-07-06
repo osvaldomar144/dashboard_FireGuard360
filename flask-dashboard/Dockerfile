@@ -6,9 +6,7 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
-# Copia codice dell'app e il file di configurazione .env
-COPY app/ .
-COPY run.py .
-COPY CONFIG_FIREGUARD360.env .
+# Copia tutto il codice sorgente
+COPY . .
 
 CMD ["python", "run.py"]

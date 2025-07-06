@@ -1,0 +1,30 @@
+{% macro render_table(columns, rows, table_id="datatable", empty_message="Nessun dato disponibile.") %}
+<div class="table-responsive">
+  <table id="{{ table_id }}" class="table table-bordered datatable" width="100%">
+    <thead>
+      <tr>
+        {% for col_key, col_label in columns %}
+          <th>{{ col_label }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% if rows %}
+        {% for row in rows %}
+          <tr>
+            {% for col_key, col_label in columns %}
+              <td>{{ row[col_key] if row[col_key] is defined else '' }}</td>
+            {% endfor %}
+          </tr>
+        {% endfor %}
+      {% else %}
+        <tr>
+          {% for col_key, col_label in columns %}
+            <td></td>
+          {% endfor %}
+        </tr>
+      {% endif %}
+    </tbody>
+  </table>
+</div>
+{% endmacro %}

@@ -1,0 +1,18 @@
+{% extends "layout_base.html" %}
+
+{% block body %}
+
+{% import "_components/notifications.html" as notifications %}
+
+<main class="vh-100">
+    {{ notifications.render_notifications() }}
+
+    {% block content %}{% endblock %}
+
+    <footer class="d-flex flex-column flex-md-row text-center text-md-start justify-content-between py-4 px-4 px-xl-5">
+      <div class="text-white mb-3 mb-md-0">
+        © 2025 FireGuard360. Tutti i diritti riservati.
+      </div>
+    </footer>
+</main>
+{% endblock %}

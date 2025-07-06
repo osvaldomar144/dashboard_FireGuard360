@@ -3,34 +3,17 @@ version: '3.8'
 services:
 
   # 🧩 Gateway di Ingestione dati dai sensori (Flask)
-  data-ingestion-gateway:
-    build: ./data-ingestion-gateway
-    container_name: data-ingestion-gateway
-    ports:
-      - "5001:5001"
-    environment:
-      - KAFKA_BROKER=kafka:9092
-    depends_on:
-      - kafka
-    networks:
-      - iot-net
-
-  # 🔌 Lettura da porta seriale (Arduino Uno WiFi Rev2) - Solo ambiente linux
-  # serial-to-kafka:
-  #  build:
-  #    context: ./serial-to-kafka-linux
-  #  container_name: serial-to-kafka-linux
-  #  devices:
-  #    - "/dev/ttyACM0:/dev/ttyACM0"
-  #  depends_on:
-  #    - kafka
-  #  environment:
-  #    - SERIAL_PORT=/dev/ttyACM0
-  #    - BAUD_RATE=9600
-  #    - KAFKA_BROKER=kafka:9092
-  #    - KAFKA_TOPIC=sensordata
-  #  networks:
-  #    - iot-net
+  #data-ingestion-gateway:
+    #build: ./data-ingestion-gateway
+    #container_name: data-ingestion-gateway
+    #ports:
+    #  - "5001:5001"
+    #environment:
+    #  - KAFKA_BROKER=kafka:9092
+    #depends_on:
+    #  - kafka
+    #networks:
+    #  - iot-net
 
   # 📡 Kafka Broker
   kafka:

@@ -1,0 +1,189 @@
+{% extends "layout_dashboard.html" %}
+
+{% block title %}Streaming Drone{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <div class="row">
+    <!-- Sezione Video e Dashboard -->
+    <div class="col-12">
+      <div class="card shadow border-0 w-100">
+        <div class="card-body p-4">
+
+          <!-- Stato in alto -->
+          <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+            <div>
+              <h5 class="mb-0">Stato Drone</h5>
+              <small class="text-muted">Streaming attivo da <strong>Tello</strong></small>
+            </div>
+
+            <div class="d-flex gap-3 flex-wrap text-end">
+              <!-- Batteria -->
+              <div class="bg-light border rounded px-3 py-2 shadow-sm d-flex align-items-center gap-2">
+                <i class="fas fa-battery-half text-success" id="batteryIcon"></i>
+                <div>
+                  <small class="text-muted">Batteria</small><br>
+                  <strong id="batteryLevel">--%</strong>
+                </div>
+              </div>
+
+              <!-- Altitudine 
+              <div class="bg-light border rounded px-3 py-2 shadow-sm d-flex align-items-center gap-2">
+                <i class="fas fa-arrows-alt-v text-primary"></i>
+                <div>
+                  <small class="text-muted">Altitudine</small><br>
+                  <strong id="altitude">-- m</strong>
+                </div>
+              </div>-->
+
+              <!-- Stato -->
+              <div class="bg-light border rounded px-3 py-2 shadow-sm d-flex align-items-center gap-2">
+                <i class="fas fa-satellite-dish text-danger" id="statusIcon"></i>
+                <div>
+                  <small class="text-muted">Stato</small><br>
+                  <strong id="droneStatus">Non connesso</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- Contenuto: Video + Comandi -->
+          <div class="row g-4">
+            <!-- Video -->
+            <div class="col-md-8">
+              <div class="ratio ratio-16x9 border rounded shadow-sm" style="height: 100%;">
+                <img src="http://localhost:5010/video_feed" class="w-100 h-100" style="object-fit: cover;" alt="Streaming drone">
+              </div>
+            </div>
+
+            <!-- Comandi -->
+            <div class="col-md-4">
+              <div class="bg-dark text-white rounded p-3 shadow-sm">
+                <h6 class="text-center mb-3">Rilevamento drone</h6>
+
+                <!--<div class="text-center mb-3">
+                  <div class="d-flex justify-content-center gap-2">
+                    <button class="btn btn-secondary btn-sm" id="upBtn"><i class="fas fa-arrow-up"></i></button>
+                  </div>
+                  <div class="d-flex justify-content-center gap-2 my-2">
+                    <button class="btn btn-secondary btn-sm" id="leftBtn"><i class="fas fa-arrow-left"></i></button>
+                    <button class="btn btn-secondary btn-sm" id="downBtn"><i class="fas fa-arrow-down"></i></button>
+                    <button class="btn btn-secondary btn-sm" id="rightBtn"><i class="fas fa-arrow-right"></i></button>
+                  </div>
+                </div>
+
+                <div class="d-grid gap-2 mb-2">
+                  <button class="btn btn-warning btn-sm" id="startBtn"><i class="fas fa-play"></i> Decolla</button>
+                  <button class="btn btn-info btn-sm" id="landBtn"><i class="fas fa-plane-arrival"></i> Atterra</button>
+                </div>
+
+                <div class="d-flex justify-content-around mt-3">
+                  <button class="btn btn-light btn-sm" id="rotateLeftBtn"><i class="fas fa-undo"></i></button>
+                  <button class="btn btn-light btn-sm" id="rotateRightBtn"><i class="fas fa-redo"></i></button>
+                </div>-->
+
+                <!-- Log -->
+                <hr class="bg-light my-3">
+                <div class="small" style="height: 250px; overflow-y: auto;">
+                  <strong>Log:</strong>
+                  <ul class="list-unstyled mb-0" id="commandLog">
+                    <li class="text-muted">...</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div> <!-- /row g-4 -->
+
+        </div> <!-- /card-body -->
+      </div> <!-- /card -->
+    </div> <!-- /col-12 -->
+  </div> <!-- /row -->
+</div> <!-- /container-fluid -->
+{% endblock %}
+
+
+{% block extra_scripts %}
+  <script>
+    function logCommand(message) {
+      const logList = document.getElementById("commandLog");
+      const newEntry = document.createElement("li");
+      newEntry.textContent = new Date().toLocaleTimeString() + " — " + message;
+      logList.prepend(newEntry);
+      if (logList.children.length > 100) logList.lastChild.remove();
+      const empty = logList.querySelector(".text-muted");
+      if (empty) empty.remove();
+    }
+
+    function updateStatus(key, value) {
+      const element = document.getElementById(key);
+      element.textContent = value;
+
+      // Batteria: aggiorna colore in base al valore
+      if (key === "batteryLevel") {
+        const icon = document.getElementById("batteryIcon");
+        const percent = parseInt(value.replace("%", ""));
+        icon.classList.remove("text-success", "text-warning", "text-danger", "fa-battery-empty", "fa-battery-quarter", "fa-battery-half", "fa-battery-three-quarters", "fa-battery-full");
+
+        // Colore
+        if (percent <= 20) {
+          icon.classList.add("text-danger");
+        } else if (percent <= 50) {
+          icon.classList.add("text-warning");
+        } else {
+          icon.classList.add("text-success");
+        }
+
+        // Icona
+        if (percent <= 10) {
+          icon.classList.add("fa-battery-empty");
+        } else if (percent <= 30) {
+          icon.classList.add("fa-battery-quarter");
+        } else if (percent <= 60) {
+          icon.classList.add("fa-battery-half");
+        } else if (percent <= 85) {
+          icon.classList.add("fa-battery-three-quarters");
+        } else {
+          icon.classList.add("fa-battery-full");
+        }
+      }
+
+      // Stato: colore rosso o verde
+      if (key === "droneStatus") {
+        const icon = document.getElementById("statusIcon");
+        icon.classList.remove("text-success", "text-danger");
+
+        if (value.toLowerCase().includes("connesso")) {
+          icon.classList.add("text-success");
+        } else {
+          icon.classList.add("text-danger");
+        }
+      }
+    }
+
+    // Pulsanti comandi
+    /*document.getElementById("startBtn").addEventListener("click", () => logCommand("DECOLLO"));
+    document.getElementById("landBtn").addEventListener("click", () => logCommand("ATTERRAGGIO"));
+    document.getElementById("upBtn").addEventListener("click", () => logCommand("VAI SU"));
+    document.getElementById("downBtn").addEventListener("click", () => logCommand("VAI GIU"));
+    document.getElementById("leftBtn").addEventListener("click", () => logCommand("VAI A SINISTRA"));
+    document.getElementById("rightBtn").addEventListener("click", () => logCommand("VAI A DESTRA"));
+    document.getElementById("rotateLeftBtn").addEventListener("click", () => logCommand("RUOTA SX"));
+    document.getElementById("rotateRightBtn").addEventListener("click", () => logCommand("RUOTA DX"));*/
+
+    // Simulazione automatica ogni 3 secondi
+    setInterval(() => {
+      /*const battery = Math.floor(Math.random() * 101); // 0-100%
+      const altitude = (Math.random() * 5).toFixed(1); // 0.0 - 5.0 m
+      const status = Math.random() > 0.2 ? "Connesso" : "Non connesso";*/
+      const battery = 20;
+      const status = "Connesso";
+
+      updateStatus("batteryLevel", battery + "%");
+      //updateStatus("altitude", altitude + " m");
+      updateStatus("droneStatus", status);
+    }, 3000);
+  </script>
+{% endblock %}
+

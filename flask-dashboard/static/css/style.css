@@ -1,0 +1,73 @@
+body {
+	background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.03));
+	height: 100vh;
+}
+
+/******************* SIDEBAR AND NAVBAR **************/
+
+.sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  width: 250px !important;
+  overflow-y: auto;
+  z-index: 1030;
+}
+
+.main-content {
+  margin-left: 250px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.img-profile {
+  width: 32px;
+  height: 32px;
+}
+
+
+/******************* LOGIN ***************************/
+.h-custom {
+	height: calc(100vh - 73px);
+}
+
+.form-control::placeholder {
+	color: #adb5bd;
+}
+
+.login-card {
+	background-color: white;
+	border-radius: 20px;
+	box-shadow: 0 0 20px rgba(0, 123, 255, 0.1);
+	padding: 40px 30px;
+}
+
+footer {
+	background-color: #0d6efd;
+}
+
+footer a {
+	color: white;
+}
+
+footer a:hover {
+	text-decoration: underline;
+}
+
+.image-container {
+	position: relative;
+	overflow: hidden;
+}
+
+.custom-image {
+	width: 100%;
+	max-width: 400px;
+	height: auto;
+	border-radius: 0px;
+	transition: transform 0.3s ease;
+}
+
+.custom-image:hover {
+	transform: scale(1.02);
+}

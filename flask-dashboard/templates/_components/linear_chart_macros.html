@@ -1,0 +1,62 @@
+{% macro render_multi_line_chart(chart_id, labels=[], datasets=[], y_label="Valore", height="300px", title="Grafico Andamento") %}
+<div style="position: relative; height: {{ height }};">
+  <canvas id="{{ chart_id }}"></canvas>
+</div>
+
+<div class="mt-2">
+  <button class="btn btn-sm btn-outline-secondary" id="{{ chart_id }}-download-pdf">
+    Esporta in PDF
+  </button>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- jsPDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const ctx = document.getElementById("{{ chart_id }}").getContext("2d");
+
+  const chart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: {{ labels|tojson }},
+      datasets: {{ datasets|tojson }}
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: "{{ title }}"
+        },
+        legend: { position: 'top' }
+      },
+      scales: {
+        x: {
+          title: { display: true, text: "Tempo" }
+        },
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "{{ y_label }}" }
+        }
+      }
+    }
+  });
+
+  const btn = document.getElementById("{{ chart_id }}-download-pdf");
+  btn.addEventListener("click", () => {
+    const canvas = document.getElementById("{{ chart_id }}");
+    const imgData = canvas.toDataURL("image/png", 1.0);
+
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF();
+    pdf.text("{{ title }}", 10, 10);
+    pdf.addImage(imgData, 'PNG', 10, 20, 190, 100);
+    pdf.save("{{ chart_id }}.pdf");
+  });
+});
+</script>
+{% endmacro %}
