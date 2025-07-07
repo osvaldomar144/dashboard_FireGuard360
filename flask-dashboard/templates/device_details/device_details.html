@@ -1,18 +1,12 @@
 {% extends "layout_dashboard.html" %}
+{% from "_components/danger_level_macro.html" import danger_level_box %}
+
 {% block title %}Controlli Dispositivi{% endblock %}
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/device_details.css') }}">
-
 <!-- Danger Level -->
-<div class="row mb-3">
-  <div class="col">
-    <div id="danger-level-box" class="p-3 rounded shadow text-white text-center fs-4 fw-bold"
-         style="background-color: #28a745;">
-      Danger Level: <span id="danger-value">0</span>
-    </div>
-  </div>
-</div>
+{{ danger_level_box(danger_level) }}
+
 
 <!-- Notifica -->
 <div id="command-alert" class="custom-alert alert d-none">
@@ -74,25 +68,6 @@
     <canvas id="renderCanvas" style="width: 100%; height: 500px;"></canvas>
   </div>
 </div>
-
-<!-- JavaScript Stati -->
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  // Simulazione Danger Level (da backend con WebSocket o AJAX in futuro)
-  const dangerBox = document.getElementById("danger-level-box");
-  const dangerValue = document.getElementById("danger-value");
-
-  const updateDangerLevel = (value) => {
-    dangerValue.textContent = value;
-    if (value == 0) dangerBox.style.backgroundColor = "#28a745";
-    else if (value == 1) dangerBox.style.backgroundColor = "#ffc107";
-    else dangerBox.style.backgroundColor = "#dc3545";
-  };
-
-  // Prova con un valore random
-  updateDangerLevel(0); // Puoi cambiare qui a 1 o 2 per test
-});
-</script>
 
 
 <!-- BabylonJS + STL Loader -->

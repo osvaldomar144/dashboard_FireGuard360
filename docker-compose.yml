@@ -138,6 +138,8 @@ services:
       - mysql
     environment:
       - PYTHONUNBUFFERED=1
+    volumes:
+    - ./drone-handle:/app/shared
     networks:
       - iot-net
 

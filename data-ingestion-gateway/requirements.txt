@@ -4,3 +4,4 @@ kafka-python==2.0.2
 pyserial
 kafka-python-ng
 flask_cors
+pymysql

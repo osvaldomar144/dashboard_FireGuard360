@@ -1,11 +1,14 @@
 {% extends "layout_dashboard.html" %}
-
 {% import "_components/table_macros.html" as tables %}
+{% from "_components/danger_level_macro.html" import danger_level_box %}
 
 {% block title %}Overview{% endblock %}
-
 {% block content %}
+
 <h2>Benvenuto, {{ current_user.username }}!</h2>
+
+<!-- Danger Level -->
+{{ danger_level_box(danger_level) }}
 
 <!-- Valori Attuali -->
 <div class="row mt-4">
@@ -83,6 +86,5 @@
 </div>
 
 
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/overview.js') }}"></script>
 {% endblock %}
