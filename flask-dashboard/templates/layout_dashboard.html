@@ -3,7 +3,8 @@
 {% block extra_head %}
   <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
   <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
-{% endblock %}
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/danger_level.css') }}">
+  {% endblock %}
 
 
 {% block body %}
@@ -156,6 +157,11 @@
       });
     });
   </script>-->
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script type="module">
+    import { initDangerLevelWidget } from "{{ url_for('static', filename='js/danger_level.js') }}";
+    initDangerLevelWidget();
+  </script>
 
 {% endblock %}
 

@@ -1,0 +1,22 @@
+{% macro danger_level_box(current_level) %}
+<div class="row mb-3">
+  <div class="col">
+    <div id="danger-level-box" class="p-3 rounded shadow text-white text-center fs-4 fw-bold"
+         style="
+         {% if current_level == 0 %}
+           background-color: #28a745;
+         {% elif current_level == 1 %}
+           background-color: #ffc107;
+         {% else %}
+           background-color: #dc3545;
+         {% endif %}
+         ">
+      Danger Level: <span id="danger-value">{{ current_level }}</span>
+    </div>
+  </div>
+</div>
+
+<div id="command-alert" class="custom-alert alert d-none">
+  <span id="command-alert-message"></span>
+</div>
+{% endmacro %}

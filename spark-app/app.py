@@ -1,8 +1,15 @@
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import from_json, col, window, avg, to_timestamp, lit, when, max as max_
-from pyspark.sql.types import StructType, StringType, FloatType, TimestampType, IntegerType
-from dotenv import load_dotenv
 import os
+import pymysql
+from dotenv import load_dotenv
+
+from pyspark.sql import SparkSession
+from pyspark.sql.functions import (
+    from_json, col, window, avg, to_timestamp, lit, when,
+    max as max_, min as min_, sum as sum_, stddev, countDistinct, lag,
+    abs as abs_, monotonically_increasing_id, unix_timestamp, round as round_
+)
+from pyspark.sql.types import StructType, StringType, FloatType, TimestampType, IntegerType
+from pyspark.sql.window import Window
 
 load_dotenv(dotenv_path="CONFIG_FIREGUARD360.env")
 
@@ -86,7 +93,6 @@ def write_agg_to_mysql(batch_df, batch_id):
         .mode("append") \
         .save()
 
-    import pymysql
     conn = pymysql.connect(
         host="mysql",
         user=DB_USER,
@@ -132,7 +138,6 @@ def write_risk_to_mysql(batch_df, batch_id):
         .mode("append") \
         .save()
 
-    import pymysql
     conn = pymysql.connect(
         host="mysql",
         user=DB_USER,
@@ -218,7 +223,6 @@ def write_raw_to_mysql(batch_df, batch_id):
      .mode("append") \
      .save()
 
-    import pymysql
     conn = pymysql.connect(
         host="mysql",
         user=DB_USER,
@@ -237,6 +241,136 @@ df_parsed \
     .outputMode("append") \
     .option("checkpointLocation", "/tmp/checkpoints/raw") \
     .start()
+
+# ========== 5. Danger Level Aggregato di Sistema ========== #
+
+df_system_danger = df_parsed \
+    .withWatermark("timestamp", "2 minutes") \
+    .groupBy(window("timestamp", "10 minutes")) \
+    .agg(
+        avg("danger_value").alias("avg_danger"),
+        max_("danger_value").alias("max_danger")
+    ).withColumn("danger_level",
+        when(col("avg_danger") > 80, lit(1))
+        .when(col("avg_danger") > 60, lit(1))
+        .otherwise(lit(0))
+    ).select(
+        col("avg_danger"),
+        col("max_danger"),
+        col("danger_level"),
+        col("window.end").alias("calculated_at")
+    )
+
+def write_system_danger_to_mysql(batch_df, batch_id):
+
+    if batch_df.count() == 0:
+        return
+
+    # Calcolo timestamp massimo (simula "valori più recenti")
+    latest_ts = batch_df.agg({"calculated_at": "max"}).collect()[0][0]
+
+    weighted_df = batch_df \
+        .withColumn("weight", lit(1.0) - (unix_timestamp(lit(latest_ts)) - unix_timestamp("calculated_at")) / 600.0) \
+        .withColumn("weighted_danger", col("avg_danger") * col("weight"))
+
+    result_df = weighted_df.groupBy("calculated_at").agg(
+        round_((sum_("weighted_danger") / sum_("weight")), 2).alias("avg_danger"),
+        max_("max_danger").alias("max_danger")
+    ).withColumn("danger_level",
+        when(col("avg_danger") > 80, lit(1))
+        .when(col("avg_danger") > 60, lit(1))
+        .otherwise(lit(0))
+    )
+
+    # Scrivi uno e un solo record per ciascuna finestra
+    result_df.write \
+        .format("jdbc") \
+        .option("url", DB_URL) \
+        .option("dbtable", "system_danger_level_staging") \
+        .option("user", DB_USER) \
+        .option("password", DB_PASSWORD) \
+        .option("driver", DB_DRIVER) \
+        .mode("append") \
+        .save()
+
+    # Esegui la stored procedure per l'upsert
+    conn = pymysql.connect(
+        host="mysql",
+        user=DB_USER,
+        password=DB_PASSWORD,
+        database="fireGuard360_db"
+    )
+    with conn.cursor() as cursor:
+        cursor.execute("CALL upsert_system_danger_level();")
+    conn.commit()
+    conn.close()
+
+
+df_system_danger.writeStream \
+    .foreachBatch(write_system_danger_to_mysql) \
+    .outputMode("update") \
+    .option("checkpointLocation", "/tmp/checkpoints/system_danger") \
+    .start()
+
+# ========== 6. Anomaly Detection (reworked: batch-based to avoid stream-stream join) ========== #
+
+def detect_anomalies(batch_df, batch_id):
+    try:
+        if batch_df.count() == 0:
+            return
+
+        stats_df = batch_df.groupBy().agg(
+            avg("danger_value").alias("avg_danger"),
+            stddev("danger_value").alias("std_danger"),
+            max_("danger_value").alias("max_danger"),
+            min_("danger_value").alias("min_danger")
+        ).collect()[0]
+
+        avg_danger = stats_df["avg_danger"]
+        std_danger = stats_df["std_danger"]
+        max_danger = stats_df["max_danger"]
+        min_danger = stats_df["min_danger"]
+
+        anomaly_df = batch_df \
+            .withColumn("is_outlier", col("danger_value") > lit(avg_danger + 2.5 * std_danger)) \
+            .withColumn("extreme_gap_detected", lit((max_danger - min_danger) > 80)) \
+            .filter(col("is_outlier") | col("extreme_gap_detected")) \
+            .withColumn("alert_type",
+                when(col("is_outlier"), "Anomaly Detected: Danger Outlier")
+                .when(col("extreme_gap_detected"), "Anomaly Detected: Danger Gap")
+            ) \
+            .withColumn("description",
+                when(col("is_outlier"), "Danger value outlier detected")
+                .when(col("extreme_gap_detected"), "Extreme danger value difference among sensors")
+            ) \
+            .withColumn("severity",
+                when(col("is_outlier"), "moderate")
+                .when(col("extreme_gap_detected"), "high")
+            ) \
+            .select("sensor_id", "alert_type", "description", "severity", "timestamp")
+
+        if anomaly_df.count() > 0:
+            anomaly_df.write \
+                .format("jdbc") \
+                .option("url", DB_URL) \
+                .option("dbtable", TABLE_RISK_HISTORY) \
+                .option("user", DB_USER) \
+                .option("password", DB_PASSWORD) \
+                .option("driver", DB_DRIVER) \
+                .mode("append") \
+                .save()
+    except Exception as e:
+        print(f"[Batch {batch_id}] Errore nel rilevamento anomalie: {e}")
+
+# Stream per rilevamento anomalie
+df_parsed \
+    .filter(col("danger_value").isNotNull()) \
+    .writeStream \
+    .foreachBatch(detect_anomalies) \
+    .outputMode("append") \
+    .option("checkpointLocation", "/tmp/checkpoints/anomaly_alerts") \
+    .start()
+
 
 # Avvia tutti i flussi
 spark.streams.awaitAnyTermination()

@@ -9,6 +9,7 @@ import datetime
 connected_clients = 0
 stop_event = Event()
 push_thread = None
+last_danger_level = None  # salva ultimo livello inviato
 
 def serialize_row(row):
     return {
@@ -44,16 +45,26 @@ class OverviewNamespace(Namespace):
             stop_event.set()
 
 def periodic_alert_push(app):
+    global last_danger_level
+    
     with app.app_context():
         while not stop_event.is_set():
             try:
-
-                # 1. Ultimi valori per tipo di sensore (NULL -> tutti)
+                # 1. Danger Level
+                result = exec_stored_procedure("get_latest_system_danger", [1])
+                if result:
+                    level = result[0]["danger_level"]
+                    print(f"Ecco il level nuovo ricevuto {level} ed ecco il vecchio {last_danger_level}")
+                    if level != last_danger_level:
+                        last_danger_level = level
+                        socketio.emit("danger_level_update", {"danger_level": level}, namespace="/device")
+                        
+                # 2. Ultimi valori per tipo di sensore (NULL -> tutti)
                 stats = exec_stored_procedure("get_latest_stats_per_sensor")
                 serialized_stats = [serialize_row(s) for s in stats]
                 socketio.emit("update_sensor_values", serialized_stats, namespace="/overview")
 
-                # 2. Ultimi allarmi
+                # 3. Ultimi allarmi
                 alerts = exec_stored_procedure("get_latest_fire_alerts", [10])
                 serialized_alerts = [serialize_row(a) for a in alerts]
                 socketio.emit("update_alerts", serialized_alerts, namespace="/overview")
