@@ -1,8 +1,12 @@
 {% extends "layout_dashboard.html" %}
+{% from "_components/danger_level_macro.html" import danger_level_box %}
 
 {% block title %}Streaming Drone{% endblock %}
-
 {% block content %}
+
+<!-- Danger Level -->
+{{ danger_level_box(danger_level) }}
+
 <div class="container-fluid">
 
   <div class="row">
@@ -172,12 +176,12 @@
     document.getElementById("rotateLeftBtn").addEventListener("click", () => logCommand("RUOTA SX"));
     document.getElementById("rotateRightBtn").addEventListener("click", () => logCommand("RUOTA DX"));*/
 
-    // Simulazione automatica ogni 3 secondi
+    // Simulazione automatica ogni 3 secondi 
     setInterval(() => {
       /*const battery = Math.floor(Math.random() * 101); // 0-100%
       const altitude = (Math.random() * 5).toFixed(1); // 0.0 - 5.0 m
       const status = Math.random() > 0.2 ? "Connesso" : "Non connesso";*/
-      const battery = 20;
+      const battery = 70;
       const status = "Connesso";
 
       updateStatus("batteryLevel", battery + "%");
