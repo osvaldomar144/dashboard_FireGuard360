@@ -25,7 +25,7 @@ detector = cv2.aruco.ArucoDetector(aruco_dict, parameters)
 numero_aruco_base = 5; #numero di aruco da cercare
 
 # Carica il modello con i pesi salvati
-static_path = "/Users/AlexisMartinez/Documents/Uni/CPS/repository/FireGuard360/drone/Modello_Incendio"
+static_path = "C:/Users/marce/Desktop/dashboard_FireGuard360/drone-handle"
 path_to_image = static_path + "/verifica_incendio.jpg"
 path_to_model = static_path + "/best.pt"
 
@@ -37,42 +37,47 @@ model = YOLO(path_to_model)
 
 
 def __main__(arg):
-   if(int(arg) < 5 and int(arg) > 0):
-      ##RICERCA E RAGGIUNGIMENTO DELL'ARUCO
-      #numero_target = 1          #debug
-       numero_target = int(arg)         #numero di cui fare la detection
-   
-       print("Argomento ricevuto: ")
-   
-       print(numero_target)
-   
-       drone.connect()
-   
-       print(f"Batteria: {drone.get_battery()}%")
-   
-       time.sleep(5)
-   
-       #cam = cv2.VideoCapture(0)
-   
-       drone.streamon()    #attivo la telecamera
-   
-       
-       drone.takeoff()     #alzo il drone in volo
-   
-       go_to_position(numero_target)
+    try:
+        if(int(arg) < 5 and int(arg) > 0):
+            ##RICERCA E RAGGIUNGIMENTO DELL'ARUCO
+            #numero_target = 1          #debug
+            numero_target = int(arg)         #numero di cui fare la detection
+        
+            print("Argomento ricevuto: ")
+        
+            print(numero_target)
+        
+            drone.connect()
+        
+            print(f"Batteria: {drone.get_battery()}%")
+        
+            time.sleep(5)
+        
+            #cam = cv2.VideoCapture(0)
+        
+            drone.streamon()    #attivo la telecamera
+        
+            
+            drone.takeoff()     #alzo il drone in volo
+        
+            go_to_position(numero_target)
+            
+            #avvio il riconoscimento dell'immagine in multithreading
+            take_photo()    #faccio una foto con il drone
+            time.sleep(2)
+            thread = threading.Thread(target=yolo_model_testing)    #verifico la presenza dell'incendio in un test
+            thread.start()     #avvio il secondo processo 
+        
+        
+            go_home()   #torno a casa nel mentre
+        
+            drone.streamoff()
+        else:
+            print("Error in main: argument out of range 1-4")
     
-       #avvio il riconoscimento dell'immagine in multithreading
-       take_photo()    #faccio una foto con il drone
-       time.sleep(2)
-       thread = threading.Thread(target=yolo_model_testing)    #verifico la presenza dell'incendio in un test
-       thread.start()     #avvio il secondo processo 
-   
-   
-       go_home()   #torno a casa nel mentre
-   
-       drone.streamoff()
-   else:
-      print("Error in main: argument out of range 1-4")
+    except Exception:
+        send_detection(False)
+        pass
 
 
 #---------------------------------------------------------------------------------------------- UTILS

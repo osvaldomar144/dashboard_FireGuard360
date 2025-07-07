@@ -13,10 +13,10 @@ app = Flask(__name__)
 CORS(app)
 
 # === CONFIG ===
-SERIAL_PORT = 'COM9'
+SERIAL_PORT = 'COM10'
 BAUD_RATE = 9600
 
-SCRIPT_PATH = r"C:\Users\AlexisMartinez\Documents\Uni\CPS\repository\dashboard_FireGuard360\drone-handle\drone_with_REST.py"
+SCRIPT_PATH = r"C:\Users\marce\Desktop\dashboard_FireGuard360\drone-handle\drone_with_REST.py"
 
 DB_CONFIG = {
     "host": "localhost",
