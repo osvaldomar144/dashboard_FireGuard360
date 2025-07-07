@@ -277,7 +277,7 @@ def write_system_danger_to_mysql(batch_df, batch_id):
         round_((sum_("weighted_danger") / sum_("weight")), 2).alias("avg_danger"),
         max_("max_danger").alias("max_danger")
     ).withColumn("danger_level",
-        when(col("avg_danger") > 80, lit(2))
+        when(col("avg_danger") > 80, lit(1))
         .when(col("avg_danger") > 60, lit(1))
         .otherwise(lit(0))
     )
