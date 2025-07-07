@@ -1,26 +1,11 @@
 {% extends "layout_dashboard.html" %}
+{% from "_components/danger_level_macro.html" import danger_level_box %}
+
 {% block title %}Controlli Dispositivi{% endblock %}
 {% block content %}
 
-<link rel="stylesheet" href="{{ url_for('static', filename='css/device_details.css') }}">
-
 <!-- Danger Level -->
-<div class="row mb-3">
-  <div class="col">
-    <div id="danger-level-box" class="p-3 rounded shadow text-white text-center fs-4 fw-bold"
-         style="
-         {% if danger_level == 0 %}
-           background-color: #28a745;
-         {% elif danger_level == 1 %}
-           background-color: #ffc107;
-         {% else %}
-           background-color: #dc3545;
-         {% endif %}
-         ">
-      Danger Level: <span id="danger-value">{{ danger_level }}</span>
-    </div>
-  </div>
-</div>
+{{ danger_level_box(danger_level) }}
 
 
 <!-- Notifica -->
@@ -126,7 +111,6 @@ window.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script src="{{ url_for('static', filename='js/device_details.js') }}"></script>
 
 {% endblock %}

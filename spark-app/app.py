@@ -251,7 +251,7 @@ df_system_danger = df_parsed \
         avg("danger_value").alias("avg_danger"),
         max_("danger_value").alias("max_danger")
     ).withColumn("danger_level",
-        when(col("avg_danger") > 80, lit(2))
+        when(col("avg_danger") > 80, lit(1))
         .when(col("avg_danger") > 60, lit(1))
         .otherwise(lit(0))
     ).select(

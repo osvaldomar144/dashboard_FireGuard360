@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS fire_risk_alerts (
     triggered_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     INDEX idx_sensor_alert_time (sensor_id, timestamp)
 );
+
 -- =========================================
 -- 3. SENSOR STATS (Aggregati)
 -- =========================================
