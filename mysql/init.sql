@@ -186,6 +186,54 @@ END //
 
 DELIMITER ;
 
+-- =========================================
+-- 7. DANGER LEVEL AGGREGATO DI SISTEMA
+-- =========================================
+
+-- Tabella principale
+CREATE TABLE IF NOT EXISTS system_danger_level (
+    id BIGINT AUTO_INCREMENT PRIMARY KEY,
+    avg_danger FLOAT,
+    max_danger FLOAT,
+    danger_level INT, -- 0: nessun rischio, 1: potenziale, 2: confermato
+    calculated_at DATETIME NOT NULL,
+    INDEX idx_danger_time (calculated_at)
+);
+
+ALTER TABLE system_danger_level
+ADD CONSTRAINT uc_calculated_at UNIQUE (calculated_at);
+
+-- Tabella di staging per Spark
+CREATE TABLE IF NOT EXISTS system_danger_level_staging (
+    avg_danger FLOAT,
+    max_danger FLOAT,
+    danger_level INT,
+    calculated_at DATETIME NOT NULL
+);
+
+-- Stored Procedure per upsert del danger level aggregato
+DROP PROCEDURE IF EXISTS upsert_system_danger_level;
+DELIMITER //
+
+CREATE PROCEDURE upsert_system_danger_level()
+BEGIN
+    INSERT INTO system_danger_level (
+        avg_danger, max_danger, danger_level, calculated_at
+    )
+    SELECT
+        avg_danger, max_danger, danger_level, calculated_at
+    FROM system_danger_level_staging
+    ON DUPLICATE KEY UPDATE
+        avg_danger = VALUES(avg_danger),
+        max_danger = VALUES(max_danger),
+        danger_level = VALUES(danger_level);
+
+    TRUNCATE TABLE system_danger_level_staging;
+END //
+
+DELIMITER ;
+
+
 -- ========================================================================================
 --                          ALL STORED PROCEDURES
 -- ========================================================================================
@@ -407,6 +455,22 @@ BEGIN
             AND 
             IFNULL(end_date, DATE_ADD(CURDATE(), INTERVAL 1 DAY))
     ORDER BY detected_at DESC;
+END //
+
+DELIMITER ;
+
+-- Recupera ultimi danger level globali (aggregato di sistema)
+DROP PROCEDURE IF EXISTS get_latest_system_danger;
+DELIMITER //
+
+CREATE PROCEDURE get_latest_system_danger(
+    IN limit_rows INT
+)
+BEGIN
+    SELECT *
+    FROM system_danger_level
+    ORDER BY calculated_at DESC
+    LIMIT limit_rows;
 END //
 
 DELIMITER ;

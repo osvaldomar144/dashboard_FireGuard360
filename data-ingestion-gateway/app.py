@@ -10,7 +10,7 @@ app = Flask(__name__)
 CORS(app)
 
 # === CONFIG ===
-SERIAL_PORT = 'COM10'
+SERIAL_PORT = 'COM9'
 BAUD_RATE = 9600
 
 # === SERIAL SETUP ===
