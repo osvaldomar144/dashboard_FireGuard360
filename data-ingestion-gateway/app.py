@@ -6,6 +6,8 @@ import pymysql
 import serial
 import json
 import time
+import subprocess
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -13,6 +15,8 @@ CORS(app)
 # === CONFIG ===
 SERIAL_PORT = 'COM9'
 BAUD_RATE = 9600
+
+SCRIPT_PATH = r"C:\Users\AlexisMartinez\Documents\Uni\CPS\repository\dashboard_FireGuard360\drone-handle\drone_with_REST.py"
 
 DB_CONFIG = {
     "host": "localhost",
@@ -102,6 +106,30 @@ def fire_detection():
         if conn:
             conn.close()
 
+# === NUOVO ENDPOINT: esegui script esterno ===
+@app.route('/run-script', methods=['POST'])
+def run_script():
+    if not os.path.isfile(SCRIPT_PATH):
+        return jsonify({"error": f"Script non trovato: {SCRIPT_PATH}"}), 404
+
+    try:
+        result = subprocess.run(
+            ["python", SCRIPT_PATH, "1"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            check=False  # non solleva eccezioni se exit code ≠ 0
+        )
+
+        return jsonify({
+            "exit_code": result.returncode,
+            "stdout": result.stdout.strip(),
+            "stderr": result.stderr.strip()
+        }), 200
+
+    except Exception as e:
+        print(f"[SCRIPT ERROR] {e}")
+        return jsonify({"error": f"Errore durante l'esecuzione: {str(e)}"}), 500
 
 
 
