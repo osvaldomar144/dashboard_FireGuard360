@@ -15,6 +15,7 @@ def index():
         for sensor in sensors_rows
     ]
 
+    """"
     temp_data = {
         "labels": [
             "2025-07-03 12:00", 
@@ -98,5 +99,9 @@ def index():
             }
         ]
     }
+    """
+    temp_data = {"labels": [], "datasets": []}
+    hum_data = {"labels": [], "datasets": []}
+    gas_data = {"labels": [], "datasets": []}
 
     return render_template('sensors/sensors.html', sensors_rows=sensors_rows, temp_data=temp_data, hum_data=hum_data, gas_data=gas_data)

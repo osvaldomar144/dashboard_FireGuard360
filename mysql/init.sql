@@ -475,3 +475,36 @@ BEGIN
 END //
 
 DELIMITER ;
+
+-- sensor page
+DROP PROCEDURE IF EXISTS get_stats_for_charts;
+DELIMITER //
+
+CREATE PROCEDURE get_stats_for_charts(
+    IN sensor_id_param VARCHAR(50),
+    IN start_date DATETIME,
+    IN end_date DATETIME
+)
+BEGIN
+    DECLARE real_start DATETIME;
+    DECLARE real_end DATETIME;
+
+    SET real_start = IFNULL(start_date, CURDATE());
+    SET real_end   = IFNULL(end_date, CURDATE() + INTERVAL 1 DAY);
+
+    SELECT 
+        sensor_id,
+        window_end AS timestamp,
+        avg_temperature,
+        avg_humidity,
+        avg_gas
+    FROM sensor_stats
+    WHERE 
+        (sensor_id_param IS NULL OR sensor_id = sensor_id_param)
+        AND window_end >= real_start
+        AND window_end <  real_end
+    ORDER BY window_end ASC;
+END //
+
+DELIMITER ;
+

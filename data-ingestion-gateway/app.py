@@ -9,7 +9,7 @@ import time
 import subprocess
 import os
 import threading
-from datetime import datetime
+from datetime import datetime, timezone
 
 app = Flask(__name__)
 CORS(app)
@@ -65,7 +65,7 @@ def serial_read_loop():
                 try:
                     data = json.loads(line)
                     if isinstance(data, dict):
-                        data["timestamp"] = datetime.utcnow().isoformat() + "Z"
+                        data["timestamp"] = datetime.now(timezone.utc).isoformat()
                         if "sensor_id" not in data:
                             data["sensor_id"] = "unknown"
                         producer.send('sensordata', value=data)
@@ -86,7 +86,7 @@ def receive_data():
     if not data:
         return jsonify({'error': 'No JSON received'}), 400
 
-    data["timestamp"] = datetime.utcnow().isoformat() + "Z"
+    data["timestamp"] = datetime.now(timezone.utc).isoformat()
     if "sensor_id" not in data:
         data["sensor_id"] = "manual"
     producer.send('sensordata', value=data)
