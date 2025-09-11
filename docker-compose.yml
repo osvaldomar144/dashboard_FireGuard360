@@ -1,148 +1,269 @@
-version: '3.8'
+networks:
+  iot-net:
+    driver: bridge
 
 services:
 
-  # 🧩 Gateway di Ingestione dati dai sensori (Flask)
-  #data-ingestion-gateway:
-    #build: ./data-ingestion-gateway
-    #container_name: data-ingestion-gateway
-    #ports:
-    #  - "5001:5001"
-    #environment:
-    #  - KAFKA_BROKER=kafka:9092
-    #depends_on:
-    #  - kafka
-    #networks:
-    #  - iot-net
-
-  # 📡 Kafka Broker
-  kafka:
-    image: bitnami/kafka:3.6
-    container_name: kafka
-    ports:
-      - "9092:9092"    # listener interno ai container
-      - "9093:9093"    # listener accessibile da Windows
-    environment:
-      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9093
-      #- KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092
-      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
-      #- KAFKA_CFG_LISTENERS=PLAINTEXT://:9092
-      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
-      - ALLOW_PLAINTEXT_LISTENER=yes
-      - KAFKA_CREATE_TOPICS=sensordata:1:1
-    depends_on:
-      - zookeeper
-    networks:
-      - iot-net
-
-  # 🧠 Zookeeper (per il coordinamento Kafka)
+  # ---------------- Kafka stack ----------------
   zookeeper:
     image: bitnami/zookeeper:3.8
     container_name: zookeeper
-    ports:
-      - "2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    networks:
-      - iot-net
+    ports:
+      - "2181:2181"
+    networks: [iot-net]
 
-  # 🔍 Kafka UI (monitoraggio e debug)
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: kafka
+    depends_on: [zookeeper]
+    environment:
+      - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
+      # Listener interno (tra container) + esterno (host)
+      # Su Windows/Mac puoi usare host.docker.internal al posto di localhost
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9093
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
+      - ALLOW_PLAINTEXT_LISTENER=yes
+    ports:
+      - "9092:9092"   # interno ai container
+      - "9093:9093"   # accesso dall'host
+    networks: [iot-net]
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
   kafka-ui:
     image: provectuslabs/kafka-ui:v0.7.2
     container_name: kafka-ui
-    ports:
-      - "8090:8080"  # localhost:8090 per accedere
+    depends_on: [kafka]
     environment:
       - KAFKA_CLUSTERS_0_NAME=local-cluster
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
-    depends_on:
-      - kafka
-    networks:
-      - iot-net
+    ports:
+      - "8090:8080"
+    networks: [iot-net]
 
-  # 🛠 Servizio per creare topic Kafka all'avvio
-  create-kafka-topic:
+  create-kafka-topics:
     image: bitnami/kafka:3.6
-    container_name: create-kafka-topic
-    depends_on:
-      - kafka
-    networks:
-      - iot-net
-    entrypoint: ["/bin/bash", "/scripts/create-topic.sh"]
+    container_name: create-kafka-topics
+    depends_on: [kafka]
+    entrypoint: ["/bin/bash", "/scripts/create-topics.sh"]
     volumes:
       - ./kafka-scripts:/scripts
+    networks: [iot-net]
 
-  # 🗂️ Spark application (Master, Worker and Application)
-  # ⚙️ Spark Master
+  # ---------------- Producers ----------------
+  producer-synthetic:
+    image: python:3.11-slim
+    container_name: producer-synthetic
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092 
+      TOPIC: sensors.raw
+      SENSORS: "100"                  # quanti sensori simulare
+      MSGS_PER_SEC: "200"             # messaggi totali/sec (regolabile)
+      SPIKE_PROB: "0.01"              # probabilità spike
+    volumes:
+      - ./producers:/app
+    working_dir: /app
+    command: ["bash","-lc","pip install -q --no-cache-dir -r requirements.txt && python synthetic_producer.py"]
+    networks: [iot-net]
+
+  producer-replayer:
+    image: python:3.11-slim
+    container_name: producer-replayer
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_BOOTSTRAP: kafka:9092
+      TOPIC: sensors.raw
+      CSV_PATH: /data/firms_sample.csv  # path per il dataset
+      TIME_COL: time                    # nome colonna timestamp
+      LAT_COL: lat
+      LON_COL: lon
+      SPEED_MULTIPLIER: "10.0"          # 1.0=tempo reale, 10x più veloce, ecc.
+      MAX_MSGS_PER_SEC: "1000"          # tetto massimo di replay
+    volumes:
+      - ./producers:/app
+      - ./datasets:/data
+    working_dir: /app
+    command: ["bash","-lc","pip install -q --no-cache-dir -r requirements.txt && python csv_replayer.py"]
+    networks: [iot-net]
+
+  # ---------------- Data lake (S3 compatibile) ----------------
+  minio:
+    image: minio/minio:RELEASE.2025-07-23T15-54-02Z
+    container_name: minio
+    command: server /data --console-address ":9001"
+    environment:
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio12345
+    volumes:
+      - ./minio/data:/data
+    ports: ["9000:9000","9001:9001"]
+    networks: [iot-net]
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9000/minio/health/ready || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  minio-setup:
+    image: minio/mc:RELEASE.2025-07-21T05-28-08Z
+    container_name: minio-setup
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: ["/bin/sh", "/scripts/minio-setup.sh"]
+    volumes:
+      - ./minio/scripts:/scripts
+    networks: [iot-net]
+
+  # ---------------- Cassandra (serving realtime) ----------------
+  cassandra:
+    image: cassandra:4.1
+    container_name: cassandra
+    environment:
+      - MAX_HEAP_SIZE=1G
+      - HEAP_NEWSIZE=256M
+      - CASSANDRA_CLUSTER_NAME=fg360
+      - CASSANDRA_NUM_TOKENS=128
+    ports:
+      - "9042:9042"
+    volumes:
+      - ./cassandra/data:/var/lib/cassandra
+    networks: [iot-net]
+
+  cassandra-init:
+    image: cassandra:4.1
+    container_name: cassandra-init
+    depends_on: [cassandra]
+    entrypoint: ["/bin/bash", "/scripts/init-cassandra.sh"]
+    volumes:
+      - ./cassandra/scripts:/scripts
+    networks: [iot-net]
+
+# ---------------- Spark (master/worker + jobs auto-run) ----------------
   spark-master:
-    image: bitnami/spark:3.5.5-debian-12-r7
+    build:
+      context: ./spark/docker
+    image: local/spark-py:3.5.5
     container_name: spark-master
     environment:
       - SPARK_MODE=master
-    ports:
-      - "7077:7077" # Porta master Spark
-      - "8081:8080" # Interfaccia web Spark master
-    networks:
-      - iot-net
+      - SPARK_DAEMON_JAVA_OPTS=-Dcom.amazonaws.sdk.disableCertChecking=true
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    ports: ["7077:7077","8081:8080"]
+    volumes:
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+    networks: [iot-net]
 
-  # ⚙️ Spark Worker
   spark-worker:
-    image: bitnami/spark:3.5.5-debian-12-r7
+    build:
+      context: ./spark/docker
+    image: local/spark-py:3.5.5
     container_name: spark-worker
+    depends_on: [spark-master]
     environment:
       - SPARK_MODE=worker
       - SPARK_MASTER_URL=spark://spark-master:7077
-    depends_on:
-      - spark-master
-    networks:
-      - iot-net
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    volumes:
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+    networks: [iot-net]
 
   spark-app:
     build:
-      context: ./spark-app
+      context: ./spark/docker
+    image: local/spark-py:3.5.5
     container_name: spark-app
     depends_on:
-      - kafka
-      - mysql
-      - spark-master
-    networks:
-      - iot-net
+      spark-master: { condition: service_started }
+      kafka:        { condition: service_healthy }
+      cassandra:    { condition: service_started }
+      minio:        { condition: service_healthy }
+      minio-setup:  { condition: service_completed_successfully }   # ⬅️ aspetta setup MinIO
+    working_dir: /app/jobs
+    command: >
+      bash -lc '
+        # Normalizza eventuali CRLF nei .py
+        for f in /app/jobs/*.py; do [ -f "$f" ] && sed -i "s/\r$//" "$f"; done
 
-  # 🐬 Database MySQL
-  mysql:
-    image: mysql:8.0.36
-    container_name: mysql
-    restart: always
+        # Crea i "prefissi" dei checkpoint su S3A (è idempotente)
+        hadoop fs -mkdir -p ${CHECKPOINT_URI}/agg1m_cassandra ${CHECKPOINT_URI}/risk_index || true
+
+        # Esegui i job in serie (niente race sulla cache)
+        /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 /app/jobs/agg1m.py &&
+        /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 /app/jobs/risk_index.py
+      '
     environment:
-      MYSQL_ROOT_PASSWORD: root
-      MYSQL_DATABASE: fireGuard360_db
-      MYSQL_USER: fireguard_user
-      MYSQL_PASSWORD: fireguard_pass
-    ports:
-      - "3306:3306"
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+      - SPARK_SUBMIT_OPTS=-Dspark.jars.ivy=/opt/bitnami/spark/.ivy2-app
+      - CHECKPOINT_URI=s3a://lake/checkpoints             # ⬅️ prefisso unico per i checkpoint
     volumes:
-      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-    networks:
-      - iot-net
+      - ./spark/jobs:/app/jobs
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+    networks: [iot-net]
 
-  # 📊 Dashboard con flask
+  # Training KMeans (on-demand). Parte SOLO se lo attivi con un profilo.
+  spark-train-kmeans:
+    image: bitnami/spark:3.5.5-debian-12-r7
+    container_name: spark-train-kmeans
+    profiles: ["ml"]                 # <-- non si avvia di default
+    depends_on:
+      spark-master: { condition: service_started }
+      minio:        { condition: service_healthy }
+    working_dir: /app/jobs
+    command: >
+      bash -lc "
+        spark-submit --master spark://spark-master:7077 /app/jobs/train_kmeans.py
+      "
+    volumes:
+      - ./spark/jobs:/app/jobs
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+    networks: [iot-net]
+
+  # ---------------- Dashboard ----------------
   flask-dashboard:
     build: ./flask-dashboard
     container_name: flask-dashboard
+    depends_on: [cassandra]
     ports:
       - "5000:5000"
-    depends_on:
-      - mysql
     environment:
       - PYTHONUNBUFFERED=1
-    volumes:
-    - ./drone-handle:/app/shared
-    networks:
-      - iot-net
+      - CASSANDRA_HOST=cassandra
+      - CASSANDRA_PORT=9042
+    networks: [iot-net]
 
-networks:
-  iot-net:
-    driver: bridge
+  # ---- (facoltativo) MySQL legacy: lascia commentato se non serve ----
+  # mysql:
+  #   image: mysql:8.0.36
+  #   container_name: mysql
+  #   environment:
+  #     MYSQL_ROOT_PASSWORD: root
+  #     MYSQL_DATABASE: fireGuard360_db
+  #     MYSQL_USER: fireguard_user
+  #     MYSQL_PASSWORD: fireguard_pass
+  #   ports: ["3306:3306"]
+  #   volumes:
+  #     - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+  #   networks: [iot-net]
