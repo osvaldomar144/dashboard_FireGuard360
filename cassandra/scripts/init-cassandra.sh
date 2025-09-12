@@ -14,4 +14,4 @@ done
 echo "🧩 Applying schema..."
 cqlsh cassandra 9042 -f /scripts/schema.cql
 echo "✅ Schema applied."
-tail -f /dev/null
+#tail -f /dev/null

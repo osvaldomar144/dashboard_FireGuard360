@@ -1,32 +1,39 @@
-﻿#!/bin/sh
-set -eu
+﻿#!/bin/bash
+set -euo pipefail
 
-BROKER="kafka:9092"
+BROKER="${BROKER:-kafka:9092}"
 
 echo "⏳ Waiting for Kafka..."
-i=0
-while [ $i -lt 30 ]; do
+for i in $(seq 1 60); do
   if kafka-topics.sh --bootstrap-server "$BROKER" --list >/dev/null 2>&1; then
     break
   fi
-  i=$((i+1))
   sleep 2
 done
 
 echo "🧩 Creating topics (idempotent)..."
+
 create_topic() {
-  topic="$1"
-  parts="$2"
-  # --if-not-exists evita errori in caso esistano già
+  local topic="$1"
+  local parts="$2"
+  shift 2
+  local cfg_args=()
+  for kv in "$@"; do
+    cfg_args+=(--config "$kv")
+  done
   kafka-topics.sh --bootstrap-server "$BROKER" \
-    --create --if-not-exists --topic "$topic" \
-    --partitions "$parts" --replication-factor 1 || true
+    --create --if-not-exists \
+    --topic "$topic" \
+    --partitions "$parts" \
+    --replication-factor 1 \
+    "${cfg_args[@]}" || true
 }
 
-create_topic "sensors.raw"    6
-create_topic "sensors.agg-1m" 6
-create_topic "risk.index"     3
+# Live e Replay separati, retention e compressione consigliate
+create_topic "sensors.raw"    6 "retention.ms=172800000"  "compression.type=producer"  # 48h
+create_topic "sensors.replay" 6 "retention.ms=1209600000" "compression.type=producer"  # 14 giorni
+create_topic "risk.index"     3 "retention.ms=172800000"  "compression.type=producer"  # 48h
 
 echo "✅ Topics ready."
-# Evita che il container termini subito (utile per debug)
-tail -f /dev/null
+# lascia il container vivo per i log
+#tail -f /dev/null

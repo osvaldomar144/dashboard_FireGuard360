@@ -10,8 +10,7 @@ services:
     container_name: zookeeper
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
-    ports:
-      - "2181:2181"
+    ports: ["2181:2181"]
     networks: [iot-net]
 
   kafka:
@@ -20,16 +19,12 @@ services:
     depends_on: [zookeeper]
     environment:
       - KAFKA_CFG_ZOOKEEPER_CONNECT=zookeeper:2181
-      # Listener interno (tra container) + esterno (host)
-      # Su Windows/Mac puoi usare host.docker.internal al posto di localhost
       - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://localhost:9093
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,EXTERNAL://:9093
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
       - KAFKA_CFG_INTER_BROKER_LISTENER_NAME=PLAINTEXT
       - ALLOW_PLAINTEXT_LISTENER=yes
-    ports:
-      - "9092:9092"   # interno ai container
-      - "9093:9093"   # accesso dall'host
+    ports: ["9092:9092","9093:9093"]
     networks: [iot-net]
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list >/dev/null 2>&1 || exit 1"]
@@ -45,8 +40,7 @@ services:
       - KAFKA_CLUSTERS_0_NAME=local-cluster
       - KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS=kafka:9092
       - KAFKA_CLUSTERS_0_ZOOKEEPER=zookeeper:2181
-    ports:
-      - "8090:8080"
+    ports: ["8090:8080"]
     networks: [iot-net]
 
   create-kafka-topics:
@@ -65,12 +59,14 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
     environment:
-      KAFKA_BOOTSTRAP: kafka:9092 
+      KAFKA_BOOTSTRAP: kafka:9092
       TOPIC: sensors.raw
-      SENSORS: "100"                  # quanti sensori simulare
-      MSGS_PER_SEC: "200"             # messaggi totali/sec (regolabile)
-      SPIKE_PROB: "0.01"              # probabilità spike
+      SENSORS: "120"
+      MSGS_PER_SEC: "200"
+      SPIKE_PROB: "0.01"
     volumes:
       - ./producers:/app
     working_dir: /app
@@ -83,15 +79,20 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      minio-setup:
+        condition: service_completed_successfully
     environment:
       KAFKA_BOOTSTRAP: kafka:9092
-      TOPIC: sensors.raw
-      CSV_PATH: /data/firms_sample.csv  # path per il dataset
-      TIME_COL: time                    # nome colonna timestamp
+      TOPIC: sensors.replay
+
+      CSV_PATH: /data/out/fg360_prsa_replay.csv
+
+      TIME_COL: time
       LAT_COL: lat
       LON_COL: lon
-      SPEED_MULTIPLIER: "10.0"          # 1.0=tempo reale, 10x più veloce, ecc.
-      MAX_MSGS_PER_SEC: "1000"          # tetto massimo di replay
+
+      SPEED_MULTIPLIER: "150"
+      MAX_MSGS_PER_SEC: "3000"
     volumes:
       - ./producers:/app
       - ./datasets:/data
@@ -124,6 +125,10 @@ services:
       minio:
         condition: service_healthy
     entrypoint: ["/bin/sh", "/scripts/minio-setup.sh"]
+    environment:
+      - RESET_LAKE=1
+      - MINIO_ROOT_USER=minio
+      - MINIO_ROOT_PASSWORD=minio12345
     volumes:
       - ./minio/scripts:/scripts
     networks: [iot-net]
@@ -137,8 +142,7 @@ services:
       - HEAP_NEWSIZE=256M
       - CASSANDRA_CLUSTER_NAME=fg360
       - CASSANDRA_NUM_TOKENS=128
-    ports:
-      - "9042:9042"
+    ports: ["9042:9042"]
     volumes:
       - ./cassandra/data:/var/lib/cassandra
     networks: [iot-net]
@@ -152,7 +156,7 @@ services:
       - ./cassandra/scripts:/scripts
     networks: [iot-net]
 
-# ---------------- Spark (master/worker + jobs auto-run) ----------------
+  # ---------------- Spark (master/worker) ----------------
   spark-master:
     build:
       context: ./spark/docker
@@ -187,54 +191,147 @@ services:
       - ./spark/jars:/opt/spark/jars-extra
     networks: [iot-net]
 
-  spark-app:
+  spark-worker-2:
     build:
       context: ./spark/docker
     image: local/spark-py:3.5.5
-    container_name: spark-app
+    container_name: spark-worker-2
+    depends_on: [spark-master]
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_CORES=2
+      - SPARK_WORKER_MEMORY=2G
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+    volumes:
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+    networks: [iot-net]
+
+  # ---------------- Spark jobs (streaming separati) ----------------
+  # 1) Aggregazione 1m LIVE (topic sensors.raw)
+  spark-agg1m-live:
+    image: local/spark-py:3.5.5
+    container_name: spark-agg1m-live
     depends_on:
       spark-master: { condition: service_started }
       kafka:        { condition: service_healthy }
-      cassandra:    { condition: service_started }
       minio:        { condition: service_healthy }
-      minio-setup:  { condition: service_completed_successfully }   # ⬅️ aspetta setup MinIO
-    working_dir: /app/jobs
-    command: >
-      bash -lc '
-        # Normalizza eventuali CRLF nei .py
-        for f in /app/jobs/*.py; do [ -f "$f" ] && sed -i "s/\r$//" "$f"; done
-
-        # Crea i "prefissi" dei checkpoint su S3A (è idempotente)
-        hadoop fs -mkdir -p ${CHECKPOINT_URI}/agg1m_cassandra ${CHECKPOINT_URI}/risk_index || true
-
-        # Esegui i job in serie (niente race sulla cache)
-        /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 /app/jobs/agg1m.py &&
-        /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 /app/jobs/risk_index.py
-      '
+      minio-setup:  { condition: service_completed_successfully }
+      create-kafka-topics: { condition: service_completed_successfully }
     environment:
       - PYSPARK_PYTHON=python3
       - PYSPARK_DRIVER_PYTHON=python3
       - SPARK_SUBMIT_OPTS=-Dspark.jars.ivy=/opt/bitnami/spark/.ivy2-app
-      - CHECKPOINT_URI=s3a://lake/checkpoints             # ⬅️ prefisso unico per i checkpoint
+      - CHECKPOINT_URI=s3a://lake/checkpoints/live
+      - RAW_TOPIC=sensors.raw
+      - STARTING_OFFSETS=latest
+      - AGG1M_WATERMARK=2 minutes
+    working_dir: /app/jobs
+    command: >-
+      bash -lc 'sed -i "s/\r$//" /app/jobs/agg1m.py || true && /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 --conf spark.executor.cores=1 --conf spark.cores.max=1 --conf spark.executor.memory=1g --conf spark.driver.memory=1g --conf spark.sql.shuffle.partitions=2 --conf spark.sql.streaming.stateStore.providerClass=org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider --conf spark.sql.streaming.stateStore.rocksdb.localDir=/tmp/rocksdb-state --conf spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled=true --conf spark.sql.streaming.stateStore.maintenanceInterval=10s /app/jobs/agg1m.py'
+    volumes:
+      - ./spark/jobs:/app/jobs
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+      - ./spark/state/rocksdb-live:/tmp/rocksdb-state
+    networks: [iot-net]
+
+  # 2) Aggregazione 1m REPLAY (topic sensors.replay)
+  spark-agg1m-replay:
+    image: local/spark-py:3.5.5
+    container_name: spark-agg1m-replay
+    depends_on:
+      spark-master: { condition: service_started }
+      kafka:        { condition: service_healthy }
+      minio:        { condition: service_healthy }
+      minio-setup:  { condition: service_completed_successfully }
+      cassandra:    { condition: service_started }
+      cassandra-init: { condition: service_completed_successfully }
+      create-kafka-topics: { condition: service_completed_successfully }
+    environment:
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+      - SPARK_SUBMIT_OPTS=-Dspark.jars.ivy=/opt/bitnami/spark/.ivy2-app
+      - CHECKPOINT_URI=s3a://lake/checkpoints/replay
+      - RAW_TOPIC=sensors.replay
+      - STARTING_OFFSETS=earliest
+      - AGG1M_WATERMARK=1 minute
+    working_dir: /app/jobs
+    command: >-
+      bash -lc 'sed -i "s/\r$//" /app/jobs/agg1m.py || true && /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 --conf spark.executor.cores=1 --conf spark.cores.max=1 --conf spark.executor.memory=1g --conf spark.driver.memory=1g --conf spark.sql.shuffle.partitions=2 --conf spark.sql.streaming.stateStore.providerClass=org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider --conf spark.sql.streaming.stateStore.rocksdb.localDir=/tmp/rocksdb-state --conf spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled=true --conf spark.sql.streaming.stateStore.maintenanceInterval=10s /app/jobs/agg1m.py'
+    volumes:
+      - ./spark/jobs:/app/jobs
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+      - ./spark/state/rocksdb-replay:/tmp/rocksdb-state
+    networks: [iot-net]
+
+  # 3) Risk Index 10m (streaming su Parquet gold)
+  spark-risk-index:
+    image: local/spark-py:3.5.5
+    container_name: spark-risk-index
+    depends_on:
+      spark-master:   { condition: service_started }
+      minio:          { condition: service_healthy }
+      minio-setup:    { condition: service_completed_successfully }
+      cassandra:      { condition: service_started }
+      cassandra-init: { condition: service_completed_successfully }
+    environment:
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+      - SPARK_SUBMIT_OPTS=-Dspark.jars.ivy=/opt/bitnami/spark/.ivy2-app
+      - CHECKPOINT_URI=s3a://lake/checkpoints/risk
+      - RISK_WATERMARK=10 years
+    working_dir: /app/jobs
+    command: >-
+      bash -lc 'sed -i "s/\r$//" /app/jobs/risk_index.py || true && /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 --conf spark.executor.cores=1 --conf spark.cores.max=1 --conf spark.executor.memory=1g --conf spark.driver.memory=1g --conf spark.sql.shuffle.partitions=2 --conf spark.sql.streaming.stateStore.providerClass=org.apache.spark.sql.execution.streaming.state.RocksDBStateStoreProvider --conf spark.sql.streaming.stateStore.rocksdb.localDir=/tmp/rocksdb-state --conf spark.sql.streaming.stateStore.rocksdb.changelogCheckpointing.enabled=true --conf spark.sql.streaming.stateStore.maintenanceInterval=10s --conf spark.network.timeout=300s --conf spark.executor.heartbeatInterval=30s --conf spark.core.connection.ack.wait.timeout=300s --conf spark.rpc.message.maxSize=256 /app/jobs/risk_index.py'
+    volumes:
+      - ./spark/jobs:/app/jobs
+      - ./spark/conf:/opt/bitnami/spark/conf
+      - ./spark/jars:/opt/spark/jars-extra
+      - ./spark/state/rocksdb-risk:/tmp/rocksdb-state
+    networks: [iot-net]
+
+  # 4) Batch offline daily (rolling), eseguito OGNI ORA
+  spark-batch-daily:
+    image: local/spark-py:3.5.5
+    container_name: spark-batch-daily
+    depends_on:
+      spark-master: { condition: service_started }
+      minio:        { condition: service_healthy }
+      minio-setup:    { condition: service_completed_successfully }
+      cassandra:    { condition: service_started }
+      cassandra-init: { condition: service_completed_successfully }
+    environment:
+      - PYSPARK_PYTHON=python3
+      - PYSPARK_DRIVER_PYTHON=python3
+      - SPARK_SUBMIT_OPTS=-Dspark.jars.ivy=/opt/bitnami/spark/.ivy2-app
+      - GOLD_BASE=s3a://lake/gold
+      - OUT_BASE=s3a://lake/gold/daily
+      - LOOKBACK_DAYS=3
+      - BATCH_INTERVAL_SEC=3600
+    working_dir: /app/jobs
+    command: >-
+      bash -lc 'sed -i "s/\r$//" /app/jobs/batch_offline_daily.py || true; while true; do echo "[batch] run $(date -Iseconds)"; /opt/bitnami/spark/bin/spark-submit --master spark://spark-master:7077 --conf spark.executor.cores=1 --conf spark.cores.max=1 --conf spark.executor.memory=1g --conf spark.driver.memory=1g --conf spark.sql.shuffle.partitions=2 /app/jobs/batch_offline_daily.py || echo "[batch] ultimi log: job FAILED (continuerò al prossimo giro)"; sleep ${BATCH_INTERVAL_SEC:-3600}; done'
     volumes:
       - ./spark/jobs:/app/jobs
       - ./spark/conf:/opt/bitnami/spark/conf
       - ./spark/jars:/opt/spark/jars-extra
     networks: [iot-net]
 
-  # Training KMeans (on-demand). Parte SOLO se lo attivi con un profilo.
+  # Training KMeans (on-demand). Avvialo con --profile ml
   spark-train-kmeans:
     image: bitnami/spark:3.5.5-debian-12-r7
     container_name: spark-train-kmeans
-    profiles: ["ml"]                 # <-- non si avvia di default
+    profiles: ["ml"]
     depends_on:
       spark-master: { condition: service_started }
       minio:        { condition: service_healthy }
     working_dir: /app/jobs
     command: >
-      bash -lc "
-        spark-submit --master spark://spark-master:7077 /app/jobs/train_kmeans.py
-      "
+      bash -lc "spark-submit --master spark://spark-master:7077 /app/jobs/train_kmeans.py"
     volumes:
       - ./spark/jobs:/app/jobs
       - ./spark/conf:/opt/bitnami/spark/conf
@@ -246,24 +343,9 @@ services:
     build: ./flask-dashboard
     container_name: flask-dashboard
     depends_on: [cassandra]
-    ports:
-      - "5000:5000"
+    ports: ["5000:5000"]
     environment:
       - PYTHONUNBUFFERED=1
       - CASSANDRA_HOST=cassandra
       - CASSANDRA_PORT=9042
     networks: [iot-net]
-
-  # ---- (facoltativo) MySQL legacy: lascia commentato se non serve ----
-  # mysql:
-  #   image: mysql:8.0.36
-  #   container_name: mysql
-  #   environment:
-  #     MYSQL_ROOT_PASSWORD: root
-  #     MYSQL_DATABASE: fireGuard360_db
-  #     MYSQL_USER: fireguard_user
-  #     MYSQL_PASSWORD: fireguard_pass
-  #   ports: ["3306:3306"]
-  #   volumes:
-  #     - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-  #   networks: [iot-net]

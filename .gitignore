@@ -3,6 +3,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+casssandra/data/
+
 # C extensions
 *.so
 
@@ -176,3 +178,5 @@ cython_debug/
 .DS_Store
 
 data-ingestion-gateway/.venv-ingestion-gateway/
+
+cassandra/data/
