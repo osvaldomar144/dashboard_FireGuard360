@@ -34,7 +34,7 @@ La dashboard di controllo è sviluppata in **Flask**.
 
 ---
 
-## ▶️ Avvio rapido
+## ▶️ Avvio
 
 1. **Clona la repository** (se non già fatto)
 
