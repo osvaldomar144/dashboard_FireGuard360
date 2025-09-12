@@ -47,7 +47,7 @@ services:
     image: bitnami/kafka:3.6
     container_name: create-kafka-topics
     depends_on: [kafka]
-    entrypoint: ["/bin/bash", "/scripts/create-topics.sh"]
+    entrypoint: ["/bin/sh","-lc","tr -d '\r' </scripts/create-topics.sh > /tmp/create-topics.sh && chmod +x /tmp/create-topics.sh && /bin/sh /tmp/create-topics.sh"]
     volumes:
       - ./kafka-scripts:/scripts
     networks: [iot-net]
@@ -124,11 +124,9 @@ services:
     depends_on:
       minio:
         condition: service_healthy
-    entrypoint: ["/bin/sh", "/scripts/minio-setup.sh"]
+    entrypoint: ["/bin/sh","-lc","cat /scripts/minio-setup.sh | tr -d '\r' > /tmp/minio-setup.sh && chmod +x /tmp/minio-setup.sh && /bin/sh /tmp/minio-setup.sh"]
     environment:
       - RESET_LAKE=1
-      - MINIO_ROOT_USER=minio
-      - MINIO_ROOT_PASSWORD=minio12345
     volumes:
       - ./minio/scripts:/scripts
     networks: [iot-net]
@@ -151,7 +149,7 @@ services:
     image: cassandra:4.1
     container_name: cassandra-init
     depends_on: [cassandra]
-    entrypoint: ["/bin/bash", "/scripts/init-cassandra.sh"]
+    entrypoint: ["/bin/sh","-lc","tr -d '\r' </scripts/init-cassandra.sh > /tmp/init-cassandra.sh && chmod +x /tmp/init-cassandra.sh && /bin/sh /tmp/init-cassandra.sh"]
     volumes:
       - ./cassandra/scripts:/scripts
     networks: [iot-net]
