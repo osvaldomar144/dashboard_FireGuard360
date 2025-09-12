@@ -180,3 +180,5 @@ cython_debug/
 data-ingestion-gateway/.venv-ingestion-gateway/
 
 cassandra/data/
+
+minio/data/
